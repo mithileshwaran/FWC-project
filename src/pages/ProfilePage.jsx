@@ -20,19 +20,38 @@ export default function ProfilePage() {
   const [error, setError] = useState("");
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  const saveWithTimeout = (promise, ms = 15000) =>
+    Promise.race([
+      promise,
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Request timeout. Check internet and try again.")), ms)
+      ),
+    ]);
 
   const handleSave = async () => {
     setError("");
+    setSaved(false);
+    if (!user?.uid) {
+      setError("Session expired. Please sign in again.");
+      return;
+    }
     if (!form.name || !form.email || !form.mobile || !form.dob || !form.address) {
       setError("Please fill all fields.");
       return;
     }
     setLoading(true);
     try {
-      await saveProfile(user.uid, { ...form, uid: user.uid });
+      await saveWithTimeout(saveProfile(user.uid, { ...form, uid: user.uid }));
       setSaved(true);
     } catch (err) {
-      setError(err.message);
+      const msg = err?.message || "";
+      if (msg.includes("permission")) {
+        setError("Permission denied. Check Firestore rules for signed-in users.");
+      } else if (msg.includes("network") || msg.includes("timeout")) {
+        setError("Network issue. Please check internet and try again.");
+      } else {
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }

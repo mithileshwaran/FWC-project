@@ -33,10 +33,18 @@ export function AuthProvider({ children }) {
   const logout = () => signOut(auth);
 
   const setupRecaptcha = (containerId) => {
+    if (window.recaptchaVerifier) return window.recaptchaVerifier;
     window.recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
       size: "invisible",
     });
     return window.recaptchaVerifier;
+  };
+
+  const clearRecaptcha = () => {
+    if (window.recaptchaVerifier) {
+      window.recaptchaVerifier.clear();
+      window.recaptchaVerifier = null;
+    }
   };
 
   const sendOTP = (phoneNumber, appVerifier) =>
@@ -44,9 +52,18 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, signup, signin, logout, setupRecaptcha, sendOTP }}
+      value={{
+        user,
+        loading,
+        signup,
+        signin,
+        logout,
+        setupRecaptcha,
+        clearRecaptcha,
+        sendOTP,
+      }}
     >
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 }
