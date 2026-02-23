@@ -78,6 +78,10 @@ export default function BuyerDetails() {
   };
 
   const handleSubmit = async () => {
+    if (!user?.uid) {
+      setError("Session expired. Please sign in again.");
+      return;
+    }
     if (!docs.idProof || !docs.addressProof || !docs.propertyDocs) {
       setError("Please upload all required documents.");
       return;
@@ -111,6 +115,7 @@ export default function BuyerDetails() {
     } catch (err) {
       setError(err.message);
     } finally {
+      setVerifying(false);
       setLoading(false);
     }
   };

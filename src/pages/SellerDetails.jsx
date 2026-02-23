@@ -63,6 +63,14 @@ export default function SellerDetails() {
   };
 
   const handleSubmit = async () => {
+    if (!user?.uid) {
+      setError("Session expired. Please sign in again.");
+      return;
+    }
+    if (!videoComplete || !videoData) {
+      setError("Please complete video consent before final submission.");
+      return;
+    }
     setError("");
     setLoading(true);
     try {
@@ -90,6 +98,7 @@ export default function SellerDetails() {
     } catch (err) {
       setError(err.message);
     } finally {
+      setVerifying(false);
       setLoading(false);
     }
   };

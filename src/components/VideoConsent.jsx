@@ -1,21 +1,22 @@
-// components/VideoConsent.jsx
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button, Alert } from "./UI";
 import { useAuth } from "../hooks/useAuth.jsx";
 import { uploadFile, saveVideoConsent } from "../utils/firestore";
 import { analyzeSentiment } from "../utils/sentiment";
 
 const CONSENT_SCRIPT =
-  "I am [Your Name], the owner of survey number [Survey No.]. I am selling this property of my own free will and without any coercion. I confirm that all documents submitted are genuine.";
+  "I am [Your Name], the owner of survey number [Survey No.]. I am selling this property voluntarily.";
 
 export default function VideoConsent({ onComplete }) {
   const { user } = useAuth();
   const videoRef = useRef(null);
   const mediaRecorderRef = useRef(null);
-  const chunksRef = useRef([]);
   const recognitionRef = useRef(null);
+  const streamRef = useRef(null);
+  const autoStopRef = useRef(null);
+  const chunksRef = useRef([]);
 
-  const [phase, setPhase] = useState("ownership"); // ownership | countdown | recording | preview | analyzing | done
+  const [phase, setPhase] = useState("ownership");
   const [isOwner, setIsOwner] = useState(null);
   const [relation, setRelation] = useState("");
   const [countdown, setCountdown] = useState(3);
@@ -25,97 +26,163 @@ export default function VideoConsent({ onComplete }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
 
-  // ── Countdown logic ──────────────────────────────────────────────────────
+  const stopStream = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+  };
+
   useEffect(() => {
-    if (phase !== "countdown") return;
+    return () => {
+      if (autoStopRef.current) clearTimeout(autoStopRef.current);
+      if (recognitionRef.current) recognitionRef.current.stop();
+      stopStream();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (phase !== "countdown") return undefined;
     if (countdown === 0) {
       startRecording();
-      return;
+      return undefined;
     }
-    const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
-    return () => clearTimeout(timer);
+    const t = setTimeout(() => setCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
   }, [phase, countdown]);
 
-  // ── Start camera preview ─────────────────────────────────────────────────
   const startPreview = async () => {
+    setError("");
+    setCountdown(3);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error("Camera is not supported in this browser.");
+      }
+      stopStream();
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      } catch {
+        // Fallback when microphone permission is blocked.
+        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      }
+      streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.muted = true;
-        videoRef.current.play();
+        videoRef.current.controls = false;
+        videoRef.current.playsInline = true;
+        await videoRef.current.play().catch(() => {});
       }
       setPhase("countdown");
-    } catch {
-      setError("Camera access denied. Please allow camera and microphone.");
+    } catch (err) {
+      setError(err?.message || "Camera permission denied.");
+      setPhase("ownership");
+      stopStream();
     }
   };
 
-  // ── Start recording ──────────────────────────────────────────────────────
   const startRecording = () => {
-    const stream = videoRef.current?.srcObject;
-    if (!stream) return;
-    chunksRef.current = [];
-    const mr = new MediaRecorder(stream, { mimeType: "video/webm;codecs=vp9,opus" });
-    mr.ondataavailable = (e) => chunksRef.current.push(e.data);
-    mr.onstop = () => {
-      const blob = new Blob(chunksRef.current, { type: "video/webm" });
-      setRecordedBlob(blob);
-      const url = URL.createObjectURL(blob);
-      if (videoRef.current) {
-        videoRef.current.srcObject = null;
-        videoRef.current.src = url;
-        videoRef.current.muted = false;
-        videoRef.current.controls = true;
+    try {
+      const stream = streamRef.current || videoRef.current?.srcObject;
+      if (!stream) {
+        setError("Camera stream not available. Try again.");
+        setPhase("ownership");
+        return;
       }
-      setPhase("preview");
-    };
-    mediaRecorderRef.current = mr;
-    mr.start();
 
-    // Speech recognition for transcript
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SR) {
-      const rec = new SR();
-      rec.lang = "en-IN";
-      rec.continuous = true;
-      rec.interimResults = false;
-      rec.onresult = (e) => {
-        const text = Array.from(e.results).map((r) => r[0].transcript).join(" ");
-        setTranscript(text);
+      chunksRef.current = [];
+      const formats = [
+        "video/webm;codecs=vp9,opus",
+        "video/webm;codecs=vp8,opus",
+        "video/webm",
+      ];
+      const mimeType = formats.find((f) => MediaRecorder.isTypeSupported(f));
+      const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+
+      recorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) chunksRef.current.push(e.data);
       };
-      recognitionRef.current = rec;
-      rec.start();
-    }
 
-    setPhase("recording");
-    // Auto-stop after 60 seconds
-    setTimeout(() => stopRecording(), 60000);
+      recorder.onstop = () => {
+        if (!chunksRef.current.length) {
+          setError("Recording failed. Please re-record.");
+          setPhase("ownership");
+          stopStream();
+          return;
+        }
+        const blob = new Blob(chunksRef.current, { type: mimeType || "video/webm" });
+        setRecordedBlob(blob);
+        const url = URL.createObjectURL(blob);
+        if (videoRef.current) {
+          videoRef.current.srcObject = null;
+          videoRef.current.src = url;
+          videoRef.current.muted = false;
+          videoRef.current.controls = true;
+        }
+        stopStream();
+        setPhase("preview");
+      };
+
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SR) {
+        const rec = new SR();
+        rec.lang = "en-IN";
+        rec.continuous = true;
+        rec.interimResults = false;
+        rec.onresult = (e) => {
+          const text = Array.from(e.results).map((r) => r[0].transcript).join(" ");
+          setTranscript(text);
+        };
+        recognitionRef.current = rec;
+        try {
+          rec.start();
+        } catch {
+          // Speech recognition permission errors should not block video recording.
+        }
+      }
+
+      setPhase("recording");
+      if (autoStopRef.current) clearTimeout(autoStopRef.current);
+      autoStopRef.current = setTimeout(() => stopRecording(), 60000);
+    } catch (err) {
+      setError(err?.message || "Unable to start recording on this browser.");
+      setPhase("ownership");
+      stopStream();
+    }
   };
 
   const stopRecording = () => {
-    mediaRecorderRef.current?.stop();
-    recognitionRef.current?.stop();
+    if (autoStopRef.current) clearTimeout(autoStopRef.current);
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+    }
+    if (recognitionRef.current) recognitionRef.current.stop();
   };
 
-  // ── Analyse & Upload ─────────────────────────────────────────────────────
   const handleSubmit = async () => {
+    if (!recordedBlob) {
+      setError("Please record a video first.");
+      return;
+    }
+    if (!user?.uid) {
+      setError("Session expired. Please sign in again.");
+      return;
+    }
+
+    setError("");
     setUploading(true);
     setPhase("analyzing");
     try {
-      // Sentiment analysis on transcript
-      const result = await analyzeSentiment(
-        transcript || "I am selling this property by my own will"
-      );
+      const result = await analyzeSentiment(transcript || "I am selling this property voluntarily");
       setSentiment(result);
 
-      // Upload video
-      const videoUrl = await uploadFile(
-        `sellers/${user.uid}/consent_video.webm`,
-        recordedBlob
-      );
-
+      const videoUrl = await uploadFile(`sellers/${user.uid}/consent_video.webm`, recordedBlob);
       const aiApproved = result.label !== "negative";
+
       await saveVideoConsent(user.uid, {
         videoUrl,
         transcript,
@@ -128,99 +195,77 @@ export default function VideoConsent({ onComplete }) {
       });
 
       setPhase("done");
-      onComplete && onComplete({ aiApproved, sentiment: result });
+      if (onComplete) onComplete({ aiApproved, sentiment: result });
     } catch (err) {
-      setError(err.message);
+      setError(err?.message || "Video submission failed.");
       setPhase("preview");
     } finally {
       setUploading(false);
     }
   };
 
-  // ── RENDER ───────────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col gap-6">
       {error && <Alert type="error">{error}</Alert>}
 
-      {/* Phase: Ownership check */}
       {phase === "ownership" && (
         <div className="space-y-5">
           <Alert type="info">
-            <strong>Before recording:</strong> Please confirm your relationship to the property.
+            Please confirm relation and record consent video.
           </Alert>
           <p className="font-semibold text-stone-800">
             Is the person recording the video the land owner?
           </p>
           <div className="flex gap-3">
             <button
+              type="button"
               onClick={() => setIsOwner(true)}
-              className={`flex-1 py-3 rounded-xl border-2 font-bold transition-all
-                ${isOwner === true ? "border-stone-900 bg-stone-900 text-white" : "border-stone-200 text-stone-600 hover:border-stone-400"}`}
+              className={`flex-1 py-3 rounded-xl border-2 font-bold transition-all ${
+                isOwner === true ? "border-stone-900 bg-stone-900 text-white" : "border-stone-200 text-stone-600"
+              }`}
             >
-              ✅ Yes, I'm the owner
+              Yes, owner
             </button>
             <button
+              type="button"
               onClick={() => setIsOwner(false)}
-              className={`flex-1 py-3 rounded-xl border-2 font-bold transition-all
-                ${isOwner === false ? "border-stone-900 bg-stone-900 text-white" : "border-stone-200 text-stone-600 hover:border-stone-400"}`}
+              className={`flex-1 py-3 rounded-xl border-2 font-bold transition-all ${
+                isOwner === false ? "border-stone-900 bg-stone-900 text-white" : "border-stone-200 text-stone-600"
+              }`}
             >
-              👥 No, I'm a representative
+              Representative
             </button>
           </div>
 
           {isOwner === false && (
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2">
               <label className="text-xs font-semibold text-stone-700 uppercase tracking-wide">
-                Your Relation to the Land Owner
+                Relation to owner
               </label>
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { value: "spouse",    emoji: "💑", label: "Spouse" },
-                  { value: "son",       emoji: "👨‍👩‍👦", label: "Son / Daughter" },
-                  { value: "parent",    emoji: "👴", label: "Parent" },
-                  { value: "sibling",   emoji: "🤝", label: "Sibling" },
-                  { value: "legal_rep", emoji: "⚖️", label: "Legal Rep / PoA" },
-                  { value: "other",     emoji: "👤", label: "Other" },
-                ].map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => setRelation(opt.value)}
-                    className={`flex items-center gap-2 px-4 py-3 rounded-xl border-2 font-semibold text-sm transition-all text-left
-                      ${relation === opt.value
-                        ? "border-stone-900 bg-stone-900 text-white"
-                        : "border-stone-200 bg-white text-stone-600 hover:border-amber-400 hover:bg-amber-50"
-                      }`}
-                  >
-                    <span className="text-lg">{opt.emoji}</span>
-                    <span>{opt.label}</span>
-                  </button>
-                ))}
-              </div>
+              <input
+                value={relation}
+                onChange={(e) => setRelation(e.target.value)}
+                placeholder="Spouse / Son / Legal Representative"
+                className="w-full px-4 py-3 rounded-xl border-2 border-stone-200 bg-white focus:outline-none focus:border-amber-500"
+              />
             </div>
           )}
 
           {isOwner !== null && (isOwner || relation) && (
             <Button onClick={startPreview} className="w-full">
-              🎥 Start Video Recording →
+              Start Video Recording
             </Button>
           )}
         </div>
       )}
 
-      {/* Phase: Countdown */}
       {phase === "countdown" && (
         <div className="text-center py-10">
-          <div className="text-8xl font-black text-stone-900 animate-pulse">
-            {countdown === 0 ? "🔴" : countdown}
-          </div>
-          <p className="text-stone-500 mt-4 font-medium">
-            {countdown > 0 ? "Recording starts in…" : "Recording!"}
-          </p>
+          <div className="text-8xl font-black text-stone-900 animate-pulse">{countdown === 0 ? "REC" : countdown}</div>
+          <p className="text-stone-500 mt-4 font-medium">Recording starts...</p>
         </div>
       )}
 
-      {/* Camera/playback */}
       {(phase === "recording" || phase === "preview") && (
         <div className="flex flex-col gap-4">
           {phase === "recording" && (
@@ -229,6 +274,7 @@ export default function VideoConsent({ onComplete }) {
               <span className="text-sm font-bold text-red-600">RECORDING</span>
             </div>
           )}
+
           <video
             ref={videoRef}
             className="w-full rounded-xl border-2 border-stone-200 bg-black"
@@ -237,14 +283,14 @@ export default function VideoConsent({ onComplete }) {
 
           {phase === "recording" && (
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-              <p className="text-sm text-stone-700 font-medium mb-1">📜 Consent Script:</p>
+              <p className="text-sm text-stone-700 font-medium mb-1">Consent Script</p>
               <p className="text-sm text-stone-600 italic">{CONSENT_SCRIPT}</p>
             </div>
           )}
 
           {phase === "recording" && (
             <Button variant="danger" onClick={stopRecording} className="w-full">
-              ⏹ Stop Recording
+              Stop Recording
             </Button>
           )}
 
@@ -254,70 +300,37 @@ export default function VideoConsent({ onComplete }) {
                 variant="secondary"
                 onClick={() => {
                   setRecordedBlob(null);
+                  setTranscript("");
+                  setSentiment(null);
                   setCountdown(3);
                   setPhase("ownership");
                 }}
                 className="flex-1"
               >
-                🔄 Re-record
+                Re-record
               </Button>
-              <Button
-                onClick={handleSubmit}
-                loading={uploading}
-                className="flex-1"
-              >
-                ✅ Submit Video →
+              <Button onClick={handleSubmit} loading={uploading} className="flex-1">
+                Submit Video
               </Button>
             </div>
           )}
         </div>
       )}
 
-      {/* Phase: Analyzing */}
       {phase === "analyzing" && (
         <div className="text-center py-8">
-          <div className="text-4xl mb-4 animate-spin inline-block">🔍</div>
-          <p className="font-bold text-stone-900">Analyzing consent video…</p>
-          <p className="text-stone-500 text-sm mt-1">Running AI sentiment analysis</p>
+          <p className="font-bold text-stone-900">Analyzing and uploading video...</p>
         </div>
       )}
 
-      {/* Phase: Done */}
       {phase === "done" && sentiment && (
         <div className="text-center space-y-3">
-          <div className="text-5xl">
-            {sentiment.label === "negative" ? "⚠️" : "✅"}
-          </div>
           <h3 className="text-xl font-black text-stone-900">
-            {sentiment.label === "negative"
-              ? "Flagged for Manual Review"
-              : "Video Consent Accepted"}
+            {sentiment.label === "negative" ? "Flagged for Manual Review" : "Video Consent Accepted"}
           </h3>
           <p className="text-stone-500 text-sm">
-            AI sentiment detected:{" "}
-            <strong
-              className={
-                sentiment.label === "positive"
-                  ? "text-emerald-600"
-                  : sentiment.label === "negative"
-                  ? "text-red-600"
-                  : "text-amber-600"
-              }
-            >
-              {sentiment.label.toUpperCase()}
-            </strong>
+            AI sentiment: <strong>{sentiment.label.toUpperCase()}</strong>
           </p>
-          {sentiment.label === "negative" && (
-            <Alert type="warning">
-              Your video has been flagged for manual review by the Registrar due to detected sentiment. You will be notified once reviewed.
-            </Alert>
-          )}
-          {transcript && (
-            <div className="text-left bg-stone-50 rounded-xl p-4 border border-stone-200">
-              <p className="text-xs text-stone-500 font-semibold uppercase tracking-wide mb-1">Transcript</p>
-              <p className="text-sm text-stone-700 italic">"{transcript}"</p>
-            </div>
-          )}
         </div>
       )}
     </div>

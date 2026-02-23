@@ -5,6 +5,8 @@ import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  sendEmailVerification,
+  applyActionCode,
   sendPasswordResetEmail,
   verifyPasswordResetCode,
   confirmPasswordReset,
@@ -37,6 +39,17 @@ export function AuthProvider({ children }) {
   const verifyResetCode = (code) => verifyPasswordResetCode(auth, code);
   const resetPassword = (code, newPassword) =>
     confirmPasswordReset(auth, code, newPassword);
+  const sendEmailOtp = () => {
+    if (!auth.currentUser) throw new Error("Please sign in first.");
+    return sendEmailVerification(auth.currentUser);
+  };
+  const verifyEmailOtp = async (code) => {
+    await applyActionCode(auth, code);
+    if (auth.currentUser) {
+      await auth.currentUser.reload();
+      setUser({ ...auth.currentUser });
+    }
+  };
 
   return (
     <AuthContext.Provider
@@ -49,6 +62,8 @@ export function AuthProvider({ children }) {
         sendResetEmail,
         verifyResetCode,
         resetPassword,
+        sendEmailOtp,
+        verifyEmailOtp,
       }}
     >
       {children}
