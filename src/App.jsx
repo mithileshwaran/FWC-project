@@ -1,59 +1,39 @@
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import Navbar from './components/Navbar';
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import VideoConsent from './pages/VideoConsent';
-import Success from './pages/Success';
+// App.jsx
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "./hooks/useAuth.jsx";
+import ProtectedRoute from "./components/ProtectedRoute";
 
-const PageWithNavbar = ({ children }) => (
-  <div className="min-h-screen bg-slate-50">
-    <Navbar />
-    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-      {children}
-    </main>
-  </div>
-);
+import AuthPage from "./pages/AuthPage";
+import ProfilePage from "./pages/ProfilePage";
+import RegistrationTypePage from "./pages/RegistrationTypePage";
+import BuyerDetails from "./pages/BuyerDetails";
+import SellerDetails from "./pages/SellerDetails";
+import Dashboard from "./pages/Dashboard";
+import AdminDashboard from "./pages/AdminDashboard";
 
-const App = () => {
+export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Navigate to="/login" replace />} />
-      <Route
-        path="/login"
-        element={
-          <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 px-4">
-            <Login />
-          </div>
-        }
-      />
-      <Route
-        path="/dashboard"
-        element={
-          <PageWithNavbar>
-            <Dashboard />
-          </PageWithNavbar>
-        }
-      />
-      <Route
-        path="/video-consent"
-        element={
-          <PageWithNavbar>
-            <VideoConsent />
-          </PageWithNavbar>
-        }
-      />
-      <Route
-        path="/success"
-        element={
-          <PageWithNavbar>
-            <Success />
-          </PageWithNavbar>
-        }
-      />
-      <Route path="*" element={<Navigate to="/login" replace />} />
-    </Routes>
-  );
-};
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Public */}
+          <Route path="/" element={<AuthPage />} />
 
-export default App;
+          {/* Protected user routes */}
+          <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+          <Route path="/home" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/registration-type" element={<ProtectedRoute><RegistrationTypePage /></ProtectedRoute>} />
+          <Route path="/buyer" element={<ProtectedRoute><BuyerDetails /></ProtectedRoute>} />
+          <Route path="/seller" element={<ProtectedRoute><SellerDetails /></ProtectedRoute>} />
+
+          {/* Admin */}
+          <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
+  );
+}
