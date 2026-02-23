@@ -4,24 +4,43 @@ import { useAuth } from "../hooks/useAuth.jsx";
 import { Input, Button, Card, Alert } from "../components/UI";
 
 export default function AuthPage() {
-  const { signup, signin } = useAuth();
+  const { signup, signin, sendResetEmail, verifyResetCode, resetPassword } = useAuth();
   const navigate = useNavigate();
 
   const [mode, setMode] = useState("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
+  const [resetCode, setResetCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
   const switchMode = (nextMode) => {
     setMode(nextMode);
+    setSuccess("");
     setError("");
+  };
+
+  const extractResetCode = (value) => {
+    const raw = value.trim();
+    if (!raw) return "";
+    try {
+      if (raw.startsWith("http")) {
+        const url = new URL(raw);
+        return url.searchParams.get("oobCode") || "";
+      }
+    } catch {
+      return raw;
+    }
+    return raw;
   };
 
   const handleSignin = async (e) => {
     e.preventDefault();
     setError("");
+    setSuccess("");
     setLoading(true);
     try {
       await signin(email, password);
@@ -36,15 +55,63 @@ export default function AuthPage() {
   const handleSignup = async (e) => {
     e.preventDefault();
     if (!email || !password || !phone) {
-      setError("Email, password, and phone number are required.");
+      setError("Email, password, and mobile number are required.");
+      return;
+    }
+    if (phone.replace(/\D/g, "").length < 10) {
+      setError("Enter a valid 10-digit mobile number.");
       return;
     }
 
     setError("");
+    setSuccess("");
     setLoading(true);
     try {
       await signup(email, password);
       navigate("/profile");
+    } catch (err) {
+      setError(err.message.replace("Firebase: ", ""));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSendReset = async () => {
+    if (!email) {
+      setError("Enter your email address first.");
+      return;
+    }
+    setError("");
+    setSuccess("");
+    setLoading(true);
+    try {
+      await sendResetEmail(email);
+      setSuccess("Reset link/code sent to your email. Paste the code or full link below.");
+    } catch (err) {
+      setError(err.message.replace("Firebase: ", ""));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    const code = extractResetCode(resetCode);
+    if (!code || !newPassword) {
+      setError("Enter reset code/link and new password.");
+      return;
+    }
+    setError("");
+    setSuccess("");
+    setLoading(true);
+    try {
+      await verifyResetCode(code);
+      await resetPassword(code, newPassword);
+      setSuccess("Password updated successfully. Please sign in.");
+      setResetCode("");
+      setNewPassword("");
+      setPassword("");
+      setMode("signin");
     } catch (err) {
       setError(err.message.replace("Firebase: ", ""));
     } finally {
@@ -78,8 +145,9 @@ export default function AuthPage() {
         <Card>
           <div className="p-8">
             {error && <Alert type="error">{error}</Alert>}
+            {success && <Alert type="success">{success}</Alert>}
 
-            {mode === "signin" ? (
+            {mode === "signin" && (
               <form onSubmit={handleSignin} className="flex flex-col gap-4 mt-4">
                 <Input
                   label="Email Address"
@@ -100,6 +168,13 @@ export default function AuthPage() {
                 <Button type="submit" loading={loading} className="mt-2 w-full">
                   Sign In
                 </Button>
+                <button
+                  type="button"
+                  className="text-sm text-stone-700 underline"
+                  onClick={() => switchMode("forgot")}
+                >
+                  Forgot password?
+                </button>
                 <p className="text-center text-sm text-stone-500">
                   New user?{" "}
                   <button
@@ -111,7 +186,9 @@ export default function AuthPage() {
                   </button>
                 </p>
               </form>
-            ) : (
+            )}
+
+            {mode === "signup" && (
               <form onSubmit={handleSignup} className="flex flex-col gap-4 mt-4">
                 <Input
                   label="Email Address"
@@ -140,7 +217,13 @@ export default function AuthPage() {
                 <Button type="submit" loading={loading} className="w-full">
                   Create Account
                 </Button>
-
+                <button
+                  type="button"
+                  className="text-sm text-stone-700 underline"
+                  onClick={() => switchMode("forgot")}
+                >
+                  Forgot password?
+                </button>
                 <p className="text-center text-sm text-stone-500">
                   Already have an account?{" "}
                   <button
@@ -149,6 +232,51 @@ export default function AuthPage() {
                     onClick={() => switchMode("signin")}
                   >
                     Sign In
+                  </button>
+                </p>
+              </form>
+            )}
+
+            {mode === "forgot" && (
+              <form onSubmit={handleResetPassword} className="flex flex-col gap-4 mt-4">
+                <Input
+                  label="Email Address"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+                <Button type="button" loading={loading} onClick={handleSendReset} className="w-full">
+                  Send Reset Code
+                </Button>
+                <Input
+                  label="Reset Code or Link"
+                  type="text"
+                  placeholder="Paste code or full link from email"
+                  value={resetCode}
+                  onChange={(e) => setResetCode(e.target.value)}
+                  required
+                />
+                <Input
+                  label="New Password"
+                  type="password"
+                  placeholder="Enter new password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                />
+                <Button type="submit" loading={loading} className="w-full">
+                  Update Password
+                </Button>
+                <p className="text-center text-sm text-stone-500">
+                  Remembered password?{" "}
+                  <button
+                    type="button"
+                    className="font-semibold text-stone-900 underline"
+                    onClick={() => switchMode("signin")}
+                  >
+                    Back to Sign In
                   </button>
                 </p>
               </form>

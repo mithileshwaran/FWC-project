@@ -5,8 +5,9 @@ import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  RecaptchaVerifier,
-  signInWithPhoneNumber,
+  sendPasswordResetEmail,
+  verifyPasswordResetCode,
+  confirmPasswordReset,
 } from "firebase/auth";
 import { auth } from "../firebase/config";
 
@@ -32,23 +33,10 @@ export function AuthProvider({ children }) {
 
   const logout = () => signOut(auth);
 
-  const setupRecaptcha = (containerId) => {
-    if (window.recaptchaVerifier) return window.recaptchaVerifier;
-    window.recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
-      size: "invisible",
-    });
-    return window.recaptchaVerifier;
-  };
-
-  const clearRecaptcha = () => {
-    if (window.recaptchaVerifier) {
-      window.recaptchaVerifier.clear();
-      window.recaptchaVerifier = null;
-    }
-  };
-
-  const sendOTP = (phoneNumber, appVerifier) =>
-    signInWithPhoneNumber(auth, phoneNumber, appVerifier);
+  const sendResetEmail = (email) => sendPasswordResetEmail(auth, email);
+  const verifyResetCode = (code) => verifyPasswordResetCode(auth, code);
+  const resetPassword = (code, newPassword) =>
+    confirmPasswordReset(auth, code, newPassword);
 
   return (
     <AuthContext.Provider
@@ -58,9 +46,9 @@ export function AuthProvider({ children }) {
         signup,
         signin,
         logout,
-        setupRecaptcha,
-        clearRecaptcha,
-        sendOTP,
+        sendResetEmail,
+        verifyResetCode,
+        resetPassword,
       }}
     >
       {children}
