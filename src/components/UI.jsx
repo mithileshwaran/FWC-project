@@ -1,21 +1,42 @@
 import React from "react";
 
-export const Input = ({ label, error, className = "", ...props }) => (
-  <div className="flex flex-col gap-1">
-    {label && (
-      <label className="text-sm font-semibold text-slate-300 tracking-wide uppercase text-xs">
-        {label}
-      </label>
-    )}
-    <input
-      className={`w-full px-4 py-3 rounded-xl border border-slate-700 bg-slate-900
-        focus:outline-none focus:border-cyan-400 transition-all placeholder-slate-500
-        text-slate-100 font-medium ${error ? "border-red-400" : ""} ${className}`}
-      {...props}
-    />
-    {error && <span className="text-xs text-red-400">{error}</span>}
-  </div>
-);
+export const Input = ({ label, error, className = "", type = "text", ...props }) => {
+  const [showPassword, setShowPassword] = React.useState(false);
+  const isPassword = type === "password";
+  const resolvedType = isPassword && showPassword ? "text" : type;
+
+  return (
+    <div className="flex flex-col gap-1">
+      {label && (
+        <label className="text-sm font-semibold text-slate-300 tracking-wide uppercase text-xs">
+          {label}
+        </label>
+      )}
+
+      <div className="relative">
+        <input
+          type={resolvedType}
+          className={`w-full px-4 py-3 rounded-xl border border-slate-700 bg-slate-900
+            focus:outline-none focus:border-cyan-400 transition-all placeholder-slate-500
+            text-slate-100 font-medium ${isPassword ? "pr-12" : ""} ${error ? "border-red-400" : ""} ${className}`}
+          {...props}
+        />
+        {isPassword && (
+          <button
+            type="button"
+            onClick={() => setShowPassword((prev) => !prev)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-cyan-300 text-xs font-semibold"
+            aria-label={showPassword ? "Hide password" : "Show password"}
+          >
+            {showPassword ? "Hide" : "Show"}
+          </button>
+        )}
+      </div>
+
+      {error && <span className="text-xs text-red-400">{error}</span>}
+    </div>
+  );
+};
 
 export const Button = ({
   children,
