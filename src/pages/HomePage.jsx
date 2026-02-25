@@ -1,136 +1,93 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth.jsx";
-import { Button, Card, Input, Alert } from "../components/UI";
+import { useNavigate } from "react-router-dom";
 
-const PROCESS_STEPS = [
+const WORKFLOW = [
   {
-    title: "Create Account",
-    desc: "Register with email and basic profile details.",
+    title: "Create Profile",
+    desc: "Citizen creates an account and verifies email/mobile details.",
   },
   {
-    title: "Choose Type",
-    desc: "Select buyer or seller registration path.",
+    title: "Select Registration",
+    desc: "Choose buyer or seller flow based on your property role.",
   },
   {
     title: "Upload Documents",
-    desc: "Submit ID, address, and property proof.",
+    desc: "Submit ID proof, address proof, and land records securely.",
   },
   {
-    title: "Verification",
-    desc: "Records are validated and status is updated.",
+    title: "Officer Verification",
+    desc: "Officials review documents and approve the registration request.",
   },
 ];
 
 export default function HomePage() {
-  const { signin } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-    try {
-      await signin(email, password);
-      navigate("/home");
-    } catch (err) {
-      setError(err.message.replace("Firebase: ", ""));
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-stone-50 to-orange-100 relative overflow-hidden">
-      <div className="absolute -top-24 -left-24 w-72 h-72 bg-amber-200/50 rounded-full blur-3xl" />
-      <div className="absolute -bottom-24 -right-24 w-80 h-80 bg-orange-200/50 rounded-full blur-3xl" />
+    <div className="bg-slate-950 text-slate-100 min-h-screen">
+      <section className="relative min-h-screen overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(56,189,248,0.2),transparent_35%),radial-gradient(circle_at_80%_10%,rgba(16,185,129,0.15),transparent_30%),linear-gradient(145deg,#020617_20%,#0f172a_100%)]" />
 
-      <div className="relative max-w-6xl mx-auto px-4 pt-8 pb-16">
-        <header className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-stone-900 text-amber-200 font-black flex items-center justify-center">
-              TN
-            </div>
-            <div>
-              <h1 className="text-xl font-black text-stone-900" style={{ fontFamily: "Georgia, serif" }}>
-                TN Land Registry
-              </h1>
-              <p className="text-xs text-stone-500">Digital Property Registration Portal</p>
-            </div>
-          </div>
-          <Link to="/auth" className="text-sm font-semibold text-stone-700 underline">
-            Full Auth Page
-          </Link>
-        </header>
+        <button
+          type="button"
+          onClick={() => navigate("/auth")}
+          className="fixed right-3 top-1/2 -translate-y-1/2 z-20 rounded-full bg-cyan-400 text-slate-900 text-xs font-bold tracking-wide px-3 py-2 shadow-lg hover:bg-cyan-300 transition"
+        >
+          LOGIN
+        </button>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-10 items-start">
-          <section className="lg:col-span-2">
-            <h2 className="text-4xl md:text-5xl font-black text-stone-900 leading-tight" style={{ fontFamily: "Georgia, serif" }}>
-              Secure Online Land Registration for Tamil Nadu
-            </h2>
-            <p className="mt-4 text-stone-600 max-w-2xl">
-              Complete buyer or seller registration with guided steps, document upload, and verification tracking.
+        <div className="relative z-10 mx-auto max-w-7xl px-6 min-h-screen flex flex-col justify-center">
+          <div className="max-w-4xl">
+            <p className="text-cyan-300 text-sm uppercase tracking-[0.2em] font-semibold">
+              Tamil Nadu e-Registration
+            </p>
+            <h1 className="mt-4 text-4xl md:text-6xl lg:text-7xl font-black leading-tight">
+              Faceless AI Based
+              <br />
+              Online Land Registration
+            </h1>
+            <p className="mt-6 text-slate-300 text-base md:text-lg max-w-2xl">
+              Full-screen digital portal for secure, transparent, and fast property registration.
             </p>
 
-            <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {PROCESS_STEPS.map((step, idx) => (
-                <Card key={step.title} className="p-5 border-l-4 border-amber-500">
-                  <p className="text-xs tracking-widest text-stone-500 font-bold">STEP {idx + 1}</p>
-                  <h3 className="mt-1 font-black text-stone-900">{step.title}</h3>
-                  <p className="mt-1 text-sm text-stone-600">{step.desc}</p>
-                </Card>
-              ))}
-            </div>
-
-            <div className="mt-8 flex gap-3 flex-wrap">
-              <Button onClick={() => navigate("/auth")} className="px-8">
-                Start Registration
-              </Button>
-              <Button variant="secondary" onClick={() => navigate("/dashboard")} className="px-8">
+            <div className="mt-10 flex flex-wrap gap-4">
+              <button
+                type="button"
+                onClick={() => navigate("/auth")}
+                className="rounded-xl bg-cyan-400 text-slate-900 font-bold px-6 py-3 hover:bg-cyan-300 transition"
+              >
+                Start Now
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate("/dashboard")}
+                className="rounded-xl border border-slate-500 text-slate-100 font-semibold px-6 py-3 hover:bg-slate-800 transition"
+              >
                 View Dashboard
-              </Button>
+              </button>
             </div>
-          </section>
-
-          <aside className="lg:sticky lg:top-8">
-            <Card className="shadow-2xl">
-              <div className="p-6">
-                <h3 className="text-xl font-black text-stone-900">Quick Login</h3>
-                <p className="text-sm text-stone-500 mt-1">Sign in from here directly.</p>
-                {error && <Alert type="error">{error}</Alert>}
-                <form onSubmit={handleLogin} className="mt-4 flex flex-col gap-4">
-                  <Input
-                    label="Email"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                  <Input
-                    label="Password"
-                    type="password"
-                    placeholder="Enter password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                  <Button type="submit" loading={loading} className="w-full">
-                    Login
-                  </Button>
-                  <Link to="/auth" className="text-sm text-stone-700 underline text-center">
-                    Sign up / Forgot password
-                  </Link>
-                </form>
-              </div>
-            </Card>
-          </aside>
+          </div>
         </div>
-      </div>
+      </section>
+
+      <section className="relative z-10 -mt-20 pb-20 px-6">
+        <div className="mx-auto max-w-7xl rounded-3xl border border-slate-800 bg-slate-900/80 backdrop-blur-md p-6 md:p-10">
+          <h2 className="text-2xl md:text-4xl font-bold text-white">Registration Workflow</h2>
+          <p className="mt-2 text-slate-300">Simple step-by-step process for citizens and officers.</p>
+
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {WORKFLOW.map((step, index) => (
+              <div
+                key={step.title}
+                className="rounded-2xl border border-slate-700 bg-slate-900 p-5 hover:border-cyan-400 transition"
+              >
+                <p className="text-xs text-cyan-300 font-bold tracking-widest">STEP {index + 1}</p>
+                <h3 className="mt-2 text-lg font-bold text-white">{step.title}</h3>
+                <p className="mt-2 text-sm text-slate-300">{step.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
