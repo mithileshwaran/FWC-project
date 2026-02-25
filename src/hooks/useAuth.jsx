@@ -9,7 +9,6 @@ import {
   sendPasswordResetEmail,
   verifyPasswordResetCode,
   confirmPasswordReset,
-  fetchSignInMethodsForEmail,
 } from "firebase/auth";
 import { auth } from "../firebase/config";
 
@@ -53,13 +52,11 @@ export function AuthProvider({ children }) {
 
   const logout = () => signOut(auth);
 
+  const normalizeEmail = (email) => (email || "").trim().toLowerCase();
+
   const sendResetEmail = async (email) => {
     try {
-      const methods = await fetchSignInMethodsForEmail(auth, email);
-      if (!methods?.length) {
-        throw new Error("No account found with this email.");
-      }
-      await sendPasswordResetEmail(auth, email, getActionSettings());
+      await sendPasswordResetEmail(auth, normalizeEmail(email), getActionSettings());
     } catch (err) {
       throw new Error(friendlyAuthError(err));
     }

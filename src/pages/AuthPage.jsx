@@ -83,7 +83,8 @@ export default function AuthPage() {
   };
 
   const handleSendReset = async () => {
-    if (!email) {
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail) {
       setError("Enter your email address first.");
       return;
     }
@@ -91,7 +92,7 @@ export default function AuthPage() {
     setSuccess("");
     setLoading(true);
     try {
-      await sendResetEmail(email);
+      await sendResetEmail(normalizedEmail);
       setSuccess("Reset email sent. Check Inbox/Spam and paste the code or link below.");
       setForgotStep("verify");
     } catch (err) {

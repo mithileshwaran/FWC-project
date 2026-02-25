@@ -35,7 +35,7 @@ export default function HomePage() {
           LOGIN
         </button>
 
-        <div className="relative z-10 mx-auto max-w-7xl px-6 min-h-screen flex flex-col justify-center">
+        <div className="relative z-10 mx-auto max-w-7xl px-6 min-h-screen flex flex-col justify-center md:justify-start md:pt-28">
           <div className="max-w-4xl">
             <p className="text-cyan-300 text-sm uppercase tracking-[0.2em] font-semibold">
               Tamil Nadu e-Registration
