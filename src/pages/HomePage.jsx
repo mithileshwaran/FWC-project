@@ -59,25 +59,24 @@ export default function HomePage() {
               </button>
             </div>
           </div>
-        </div>
-      </section>
+          <div className="mt-10 pb-16">
+            <div className="mx-auto max-w-7xl rounded-3xl border border-slate-800 bg-slate-900/80 backdrop-blur-md p-8 md:p-12">
+              <h2 className="text-3xl md:text-5xl font-bold text-white">Registration Workflow</h2>
+              <p className="mt-3 text-slate-300 text-base md:text-lg">Simple step-by-step process for citizens and officers.</p>
 
-      <section className="relative z-10 -mt-32 pb-24 px-6">
-        <div className="mx-auto max-w-7xl rounded-3xl border border-slate-800 bg-slate-900/80 backdrop-blur-md p-8 md:p-12">
-          <h2 className="text-3xl md:text-5xl font-bold text-white">Registration Workflow</h2>
-          <p className="mt-3 text-slate-300 text-base md:text-lg">Simple step-by-step process for citizens and officers.</p>
-
-          <div className="mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-            {WORKFLOW.map((step, index) => (
-              <div
-                key={step.title}
-                className="rounded-2xl border border-slate-700 bg-slate-900 p-6 hover:border-cyan-400 transition min-h-52"
-              >
-                <p className="text-xs text-cyan-300 font-bold tracking-widest">STEP {index + 1}</p>
-                <h3 className="mt-3 text-xl font-bold text-white">{step.title}</h3>
-                <p className="mt-3 text-base text-slate-300">{step.desc}</p>
+              <div className="mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                {WORKFLOW.map((step, index) => (
+                  <div
+                    key={step.title}
+                    className="rounded-2xl border border-slate-700 bg-slate-900 p-6 hover:border-cyan-400 transition min-h-52"
+                  >
+                    <p className="text-xs text-cyan-300 font-bold tracking-widest">STEP {index + 1}</p>
+                    <h3 className="mt-3 text-xl font-bold text-white">{step.title}</h3>
+                    <p className="mt-3 text-base text-slate-300">{step.desc}</p>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
         </div>
       </section>
