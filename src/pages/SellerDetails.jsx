@@ -111,13 +111,13 @@ export default function SellerDetails() {
   if (verificationResult !== null) {
     const needsManualReview = !verificationResult || videoData?.sentiment?.label === "negative";
     return (
-      <div className="min-h-screen bg-gradient-to-br from-stone-50 to-amber-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4">
         <Card className="max-w-md w-full p-10 text-center">
           <div className="text-6xl mb-4">{needsManualReview ? "📋" : "🎉"}</div>
-          <h2 className="text-2xl font-black text-stone-900 mb-3" style={{ fontFamily: "Georgia, serif" }}>
+          <h2 className="text-2xl font-black text-white mb-3" style={{ fontFamily: "Georgia, serif" }}>
             {needsManualReview ? "Pending Registrar Review" : "Registration Complete!"}
           </h2>
-          <p className="text-stone-500 mb-6">
+          <p className="text-slate-400 mb-6">
             {needsManualReview
               ? "Your application has been submitted and is pending manual approval by the Registrar."
               : "Documents verified and video consent approved. Your seller registration is complete!"}
@@ -141,11 +141,11 @@ export default function SellerDetails() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-stone-50 to-amber-50 py-10 px-4">
+    <div className="min-h-screen bg-slate-950 text-slate-100 py-10 px-4">
       <div className="max-w-xl mx-auto">
         <div className="text-center mb-8">
           <span className="text-3xl">🏡</span>
-          <h1 className="text-2xl font-black text-stone-900 mt-2" style={{ fontFamily: "Georgia, serif" }}>
+          <h1 className="text-2xl font-black text-white mt-2" style={{ fontFamily: "Georgia, serif" }}>
             Seller Registration
           </h1>
         </div>
@@ -163,9 +163,9 @@ export default function SellerDetails() {
                 <Input label="Mobile" type="tel" value={personal.mobile} onChange={setP("mobile")} />
                 <Input label="Business / Company Name (optional)" placeholder="Sri Lakshmi Properties" value={personal.businessName} onChange={setP("businessName")} />
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs font-semibold text-stone-700 uppercase tracking-wide">Address</label>
+                  <label className="text-xs font-semibold text-slate-300 uppercase tracking-wide">Address</label>
                   <textarea
-                    className="w-full px-4 py-3 rounded-xl border-2 border-stone-200 bg-white focus:outline-none focus:border-amber-500 transition-all text-stone-800 font-medium resize-none"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-700 bg-slate-900 focus:outline-none focus:border-cyan-400 transition-all text-slate-100 font-medium resize-none"
                     rows={3}
                     value={personal.address}
                     onChange={setP("address")}
@@ -230,3 +230,4 @@ export default function SellerDetails() {
     </div>
   );
 }
+

@@ -32,16 +32,16 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-stone-50 to-amber-50">
+    <div className="min-h-screen bg-slate-950 text-slate-100">
       {/* Header */}
-      <header className="bg-white border-b border-stone-100 px-6 py-4 flex items-center justify-between shadow-sm">
+      <header className="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-3">
           <span className="text-2xl">🏛️</span>
           <div>
-            <h1 className="font-black text-stone-900" style={{ fontFamily: "Georgia, serif" }}>
+            <h1 className="font-black text-white" style={{ fontFamily: "Georgia, serif" }}>
               TN Land Registry
             </h1>
-            <p className="text-stone-400 text-xs">{user?.email || user?.phoneNumber}</p>
+            <p className="text-slate-400 text-xs">{user?.email || user?.phoneNumber}</p>
           </div>
         </div>
         <Button variant="secondary" onClick={logout} className="text-sm py-2">
@@ -50,13 +50,13 @@ export default function Dashboard() {
       </header>
 
       <div className="max-w-4xl mx-auto px-4 py-10">
-        <h2 className="text-2xl font-black text-stone-900 mb-2" style={{ fontFamily: "Georgia, serif" }}>
+        <h2 className="text-2xl font-black text-white mb-2" style={{ fontFamily: "Georgia, serif" }}>
           Welcome back 👋
         </h2>
-        <p className="text-stone-500 mb-8">Here's an overview of your registrations.</p>
+        <p className="text-slate-400 mb-8">Here's an overview of your registrations.</p>
 
         {loading ? (
-          <div className="text-stone-400 text-center py-20">Loading your data…</div>
+          <div className="text-slate-400 text-center py-20">Loading your data…</div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
             {/* Buyer card */}
@@ -64,18 +64,18 @@ export default function Dashboard() {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <span className="text-2xl">🛒</span>
-                  <h3 className="font-black text-stone-900">Buyer Registration</h3>
+                  <h3 className="font-black text-white">Buyer Registration</h3>
                 </div>
                 {buyerData && <StatusBadge status={buyerData.approvalStatus} verified={buyerData.verified} />}
               </div>
               {buyerData ? (
-                <div className="text-sm text-stone-600 space-y-1">
+                <div className="text-sm text-slate-300 space-y-1">
                   <p><span className="font-semibold">Survey #:</span> {buyerData.property?.surveyNumber}</p>
                   <p><span className="font-semibold">Location:</span> {buyerData.property?.location}</p>
                   <p><span className="font-semibold">TNREGINET:</span> {buyerData.verified ? "✅ Verified" : "⏳ Pending"}</p>
                 </div>
               ) : (
-                <div className="text-stone-400 text-sm">
+                <div className="text-slate-400 text-sm">
                   <p className="mb-4">No buyer registration yet.</p>
                   <Button onClick={() => navigate("/buyer")} className="w-full text-sm py-2">
                     Register as Buyer →
@@ -89,12 +89,12 @@ export default function Dashboard() {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <span className="text-2xl">🏡</span>
-                  <h3 className="font-black text-stone-900">Seller Registration</h3>
+                  <h3 className="font-black text-white">Seller Registration</h3>
                 </div>
                 {sellerData && <StatusBadge status={sellerData.approvalStatus} verified={sellerData.verified} />}
               </div>
               {sellerData ? (
-                <div className="text-sm text-stone-600 space-y-1">
+                <div className="text-sm text-slate-300 space-y-1">
                   <p><span className="font-semibold">Survey #:</span> {sellerData.property?.surveyNumber}</p>
                   <p><span className="font-semibold">Video Consent:</span>{" "}
                     {sellerData.videoConsent ? (
@@ -106,7 +106,7 @@ export default function Dashboard() {
                   <p><span className="font-semibold">TNREGINET:</span> {sellerData.verified ? "✅ Verified" : "⏳ Pending"}</p>
                 </div>
               ) : (
-                <div className="text-stone-400 text-sm">
+                <div className="text-slate-400 text-sm">
                   <p className="mb-4">No seller registration yet.</p>
                   <Button onClick={() => navigate("/seller")} className="w-full text-sm py-2">
                     Register as Seller →
@@ -124,3 +124,4 @@ export default function Dashboard() {
     </div>
   );
 }
+

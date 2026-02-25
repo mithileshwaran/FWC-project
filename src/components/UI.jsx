@@ -1,25 +1,22 @@
-// components/UI.jsx
 import React from "react";
 
-// ── Input ──────────────────────────────────────────────────────────────────
 export const Input = ({ label, error, className = "", ...props }) => (
   <div className="flex flex-col gap-1">
     {label && (
-      <label className="text-sm font-semibold text-stone-700 tracking-wide uppercase text-xs">
+      <label className="text-sm font-semibold text-slate-300 tracking-wide uppercase text-xs">
         {label}
       </label>
     )}
     <input
-      className={`w-full px-4 py-3 rounded-xl border-2 border-stone-200 bg-white
-        focus:outline-none focus:border-amber-500 transition-all placeholder-stone-300
-        text-stone-800 font-medium ${error ? "border-red-400" : ""} ${className}`}
+      className={`w-full px-4 py-3 rounded-xl border border-slate-700 bg-slate-900
+        focus:outline-none focus:border-cyan-400 transition-all placeholder-slate-500
+        text-slate-100 font-medium ${error ? "border-red-400" : ""} ${className}`}
       {...props}
     />
-    {error && <span className="text-xs text-red-500">{error}</span>}
+    {error && <span className="text-xs text-red-400">{error}</span>}
   </div>
 );
 
-// ── Button ─────────────────────────────────────────────────────────────────
 export const Button = ({
   children,
   variant = "primary",
@@ -30,13 +27,14 @@ export const Button = ({
   const base =
     "px-6 py-3 rounded-xl font-bold transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50";
   const variants = {
-    primary: "bg-stone-900 text-white hover:bg-stone-700 active:scale-95",
+    primary: "bg-cyan-400 text-slate-900 hover:bg-cyan-300 active:scale-95",
     secondary:
-      "bg-white text-stone-900 border-2 border-stone-200 hover:border-stone-400",
+      "bg-slate-900 text-slate-100 border border-slate-700 hover:border-cyan-400",
     danger: "bg-red-600 text-white hover:bg-red-700",
     success: "bg-emerald-600 text-white hover:bg-emerald-700",
-    amber: "bg-amber-500 text-white hover:bg-amber-600",
+    amber: "bg-cyan-500 text-white hover:bg-cyan-600",
   };
+
   return (
     <button
       className={`${base} ${variants[variant]} ${className}`}
@@ -54,16 +52,14 @@ export const Button = ({
   );
 };
 
-// ── Card ───────────────────────────────────────────────────────────────────
 export const Card = ({ children, className = "" }) => (
   <div
-    className={`bg-white rounded-2xl shadow-xl border border-stone-100 overflow-hidden ${className}`}
+    className={`bg-slate-900/85 rounded-2xl shadow-xl border border-slate-800 overflow-hidden backdrop-blur-sm ${className}`}
   >
     {children}
   </div>
 );
 
-// ── Progress Steps ─────────────────────────────────────────────────────────
 export const StepIndicator = ({ steps, current }) => (
   <div className="flex items-center justify-center gap-0 mb-8">
     {steps.map((step, i) => (
@@ -75,15 +71,15 @@ export const StepIndicator = ({ steps, current }) => (
                 i < current
                   ? "bg-emerald-500 text-white"
                   : i === current
-                  ? "bg-stone-900 text-white ring-4 ring-stone-200"
-                  : "bg-stone-100 text-stone-400"
+                  ? "bg-cyan-400 text-slate-900 ring-4 ring-cyan-900/50"
+                  : "bg-slate-800 text-slate-500"
               }`}
           >
-            {i < current ? "✓" : i + 1}
+            {i < current ? "Done" : i + 1}
           </div>
           <span
             className={`text-xs mt-1 font-semibold transition-all ${
-              i === current ? "text-stone-900" : "text-stone-400"
+              i === current ? "text-cyan-300" : "text-slate-400"
             }`}
           >
             {step}
@@ -92,7 +88,7 @@ export const StepIndicator = ({ steps, current }) => (
         {i < steps.length - 1 && (
           <div
             className={`h-0.5 w-12 mb-4 transition-all duration-500 ${
-              i < current ? "bg-emerald-400" : "bg-stone-200"
+              i < current ? "bg-cyan-400" : "bg-slate-700"
             }`}
           />
         )}
@@ -101,24 +97,23 @@ export const StepIndicator = ({ steps, current }) => (
   </div>
 );
 
-// ── File Upload ────────────────────────────────────────────────────────────
 export const FileUpload = ({ label, accept, onChange, fileName }) => (
   <div className="flex flex-col gap-1">
     {label && (
-      <label className="text-xs font-semibold text-stone-700 uppercase tracking-wide">
+      <label className="text-xs font-semibold text-slate-300 uppercase tracking-wide">
         {label}
       </label>
     )}
     <label className="cursor-pointer group">
       <div
-        className="border-2 border-dashed border-stone-200 rounded-xl p-4 text-center 
-        group-hover:border-amber-400 transition-all bg-stone-50"
+        className="border-2 border-dashed border-slate-700 rounded-xl p-4 text-center
+        group-hover:border-cyan-400 transition-all bg-slate-950"
       >
         {fileName ? (
-          <span className="text-sm text-emerald-600 font-semibold">✓ {fileName}</span>
+          <span className="text-sm text-emerald-400 font-semibold">Uploaded: {fileName}</span>
         ) : (
-          <span className="text-sm text-stone-400">
-            📁 Click to upload <span className="text-amber-500 font-bold">file</span>
+          <span className="text-sm text-slate-400">
+            Click to upload <span className="text-cyan-400 font-bold">file</span>
           </span>
         )}
       </div>
@@ -127,14 +122,14 @@ export const FileUpload = ({ label, accept, onChange, fileName }) => (
   </div>
 );
 
-// ── Alert ──────────────────────────────────────────────────────────────────
 export const Alert = ({ type = "info", children }) => {
   const styles = {
-    info: "bg-blue-50 border-blue-200 text-blue-800",
-    success: "bg-emerald-50 border-emerald-200 text-emerald-800",
-    error: "bg-red-50 border-red-200 text-red-800",
-    warning: "bg-amber-50 border-amber-200 text-amber-800",
+    info: "bg-cyan-950/60 border-cyan-800 text-cyan-200",
+    success: "bg-emerald-950/60 border-emerald-800 text-emerald-200",
+    error: "bg-red-950/60 border-red-800 text-red-200",
+    warning: "bg-amber-950/60 border-amber-800 text-amber-200",
   };
+
   return (
     <div className={`rounded-xl border px-4 py-3 text-sm font-medium ${styles[type]}`}>
       {children}

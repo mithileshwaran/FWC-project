@@ -30,7 +30,7 @@ export default function HomePage() {
         <button
           type="button"
           onClick={() => navigate("/auth")}
-          className="fixed right-3 top-1/2 -translate-y-1/2 z-20 rounded-full bg-cyan-400 text-slate-900 text-xs font-bold tracking-wide px-3 py-2 shadow-lg hover:bg-cyan-300 transition"
+          className="fixed right-6 top-6 z-20 rounded-full bg-cyan-400 text-slate-900 text-sm font-black tracking-wide px-5 py-3 shadow-lg hover:bg-cyan-300 transition"
         >
           LOGIN
         </button>
@@ -69,20 +69,20 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="relative z-10 -mt-20 pb-20 px-6">
-        <div className="mx-auto max-w-7xl rounded-3xl border border-slate-800 bg-slate-900/80 backdrop-blur-md p-6 md:p-10">
-          <h2 className="text-2xl md:text-4xl font-bold text-white">Registration Workflow</h2>
-          <p className="mt-2 text-slate-300">Simple step-by-step process for citizens and officers.</p>
+      <section className="relative z-10 -mt-24 pb-24 px-6">
+        <div className="mx-auto max-w-7xl rounded-3xl border border-slate-800 bg-slate-900/80 backdrop-blur-md p-8 md:p-12">
+          <h2 className="text-3xl md:text-5xl font-bold text-white">Registration Workflow</h2>
+          <p className="mt-3 text-slate-300 text-base md:text-lg">Simple step-by-step process for citizens and officers.</p>
 
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
             {WORKFLOW.map((step, index) => (
               <div
                 key={step.title}
-                className="rounded-2xl border border-slate-700 bg-slate-900 p-5 hover:border-cyan-400 transition"
+                className="rounded-2xl border border-slate-700 bg-slate-900 p-6 hover:border-cyan-400 transition min-h-52"
               >
                 <p className="text-xs text-cyan-300 font-bold tracking-widest">STEP {index + 1}</p>
-                <h3 className="mt-2 text-lg font-bold text-white">{step.title}</h3>
-                <p className="mt-2 text-sm text-slate-300">{step.desc}</p>
+                <h3 className="mt-3 text-xl font-bold text-white">{step.title}</h3>
+                <p className="mt-3 text-base text-slate-300">{step.desc}</p>
               </div>
             ))}
           </div>

@@ -13,6 +13,7 @@ export default function AuthPage() {
   const [phone, setPhone] = useState("");
   const [resetCode, setResetCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [forgotStep, setForgotStep] = useState("email");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
@@ -21,6 +22,11 @@ export default function AuthPage() {
     setMode(nextMode);
     setSuccess("");
     setError("");
+    if (nextMode !== "forgot") {
+      setForgotStep("email");
+      setResetCode("");
+      setNewPassword("");
+    }
   };
 
   const extractResetCode = (value) => {
@@ -86,7 +92,8 @@ export default function AuthPage() {
     setLoading(true);
     try {
       await sendResetEmail(email);
-      setSuccess("Reset link/code sent to your email. Paste the code or full link below.");
+      setSuccess("OTP/reset code sent to your email. Enter it below.");
+      setForgotStep("verify");
     } catch (err) {
       setError(err.message.replace("Firebase: ", ""));
     } finally {
@@ -98,9 +105,10 @@ export default function AuthPage() {
     e.preventDefault();
     const code = extractResetCode(resetCode);
     if (!code || !newPassword) {
-      setError("Enter reset code/link and new password.");
+      setError("Enter OTP/reset code and new password.");
       return;
     }
+
     setError("");
     setSuccess("");
     setLoading(true);
@@ -108,6 +116,7 @@ export default function AuthPage() {
       await verifyResetCode(code);
       await resetPassword(code, newPassword);
       setSuccess("Password updated successfully. Please sign in.");
+      setForgotStep("email");
       setResetCode("");
       setNewPassword("");
       setPassword("");
@@ -120,24 +129,20 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-stone-100 via-amber-50 to-stone-200 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-amber-100 opacity-60 blur-3xl" />
-        <div className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full bg-stone-200 opacity-60 blur-3xl" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(56,189,248,0.2),transparent_35%),radial-gradient(circle_at_80%_10%,rgba(16,185,129,0.15),transparent_30%),linear-gradient(145deg,#020617_20%,#0f172a_100%)]" />
       </div>
 
       <div className="relative w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-stone-900 rounded-2xl mb-4 shadow-xl">
-            <span className="text-2xl font-black text-amber-200">TN</span>
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-cyan-400 rounded-2xl mb-4 shadow-xl">
+            <span className="text-2xl font-black text-slate-900">TN</span>
           </div>
-          <h1
-            className="text-3xl font-black text-stone-900 tracking-tight"
-            style={{ fontFamily: "'Georgia', serif" }}
-          >
+          <h1 className="text-3xl font-black text-white tracking-tight">
             TN Land Registry
           </h1>
-          <p className="text-stone-500 mt-1 font-medium">
+          <p className="text-slate-300 mt-1 font-medium">
             Tamil Nadu Property Registration Portal
           </p>
         </div>
@@ -170,16 +175,16 @@ export default function AuthPage() {
                 </Button>
                 <button
                   type="button"
-                  className="text-sm text-stone-700 underline"
+                  className="text-sm text-cyan-300 underline"
                   onClick={() => switchMode("forgot")}
                 >
                   Forgot password?
                 </button>
-                <p className="text-center text-sm text-stone-500">
+                <p className="text-center text-sm text-slate-400">
                   New user?{" "}
                   <button
                     type="button"
-                    className="font-semibold text-stone-900 underline"
+                    className="font-semibold text-cyan-300 underline"
                     onClick={() => switchMode("signup")}
                   >
                     Sign Up
@@ -219,16 +224,16 @@ export default function AuthPage() {
                 </Button>
                 <button
                   type="button"
-                  className="text-sm text-stone-700 underline"
+                  className="text-sm text-cyan-300 underline"
                   onClick={() => switchMode("forgot")}
                 >
                   Forgot password?
                 </button>
-                <p className="text-center text-sm text-stone-500">
+                <p className="text-center text-sm text-slate-400">
                   Already have an account?{" "}
                   <button
                     type="button"
-                    className="font-semibold text-stone-900 underline"
+                    className="font-semibold text-cyan-300 underline"
                     onClick={() => switchMode("signin")}
                   >
                     Sign In
@@ -247,33 +252,45 @@ export default function AuthPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                 />
-                <Button type="button" loading={loading} onClick={handleSendReset} className="w-full">
-                  Send Reset Code
-                </Button>
-                <Input
-                  label="Reset Code or Link"
-                  type="text"
-                  placeholder="Paste code or full link from email"
-                  value={resetCode}
-                  onChange={(e) => setResetCode(e.target.value)}
-                  required
-                />
-                <Input
-                  label="New Password"
-                  type="password"
-                  placeholder="Enter new password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                />
-                <Button type="submit" loading={loading} className="w-full">
-                  Update Password
-                </Button>
-                <p className="text-center text-sm text-stone-500">
+
+                {forgotStep === "email" && (
+                  <Button type="button" loading={loading} onClick={handleSendReset} className="w-full">
+                    Send OTP
+                  </Button>
+                )}
+
+                {forgotStep === "verify" && (
+                  <>
+                    <Input
+                      label="OTP / Reset Code"
+                      type="text"
+                      placeholder="Paste OTP code or reset link"
+                      value={resetCode}
+                      onChange={(e) => setResetCode(e.target.value)}
+                      required
+                    />
+                    <Input
+                      label="New Password"
+                      type="password"
+                      placeholder="Enter new password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      required
+                    />
+                    <Button type="submit" loading={loading} className="w-full">
+                      Verify OTP and Update Password
+                    </Button>
+                    <Button type="button" variant="secondary" onClick={handleSendReset} loading={loading} className="w-full">
+                      Resend OTP
+                    </Button>
+                  </>
+                )}
+
+                <p className="text-center text-sm text-slate-400">
                   Remembered password?{" "}
                   <button
                     type="button"
-                    className="font-semibold text-stone-900 underline"
+                    className="font-semibold text-cyan-300 underline"
                     onClick={() => switchMode("signin")}
                   >
                     Back to Sign In
@@ -284,7 +301,7 @@ export default function AuthPage() {
           </div>
         </Card>
 
-        <p className="text-center text-stone-400 text-xs mt-6">
+        <p className="text-center text-slate-400 text-xs mt-6">
           Secured by Firebase Authentication
         </p>
       </div>

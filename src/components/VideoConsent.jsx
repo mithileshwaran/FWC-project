@@ -21,10 +21,15 @@ export default function VideoConsent({ onComplete }) {
   const [relation, setRelation] = useState("");
   const [countdown, setCountdown] = useState(3);
   const [recordedBlob, setRecordedBlob] = useState(null);
+  const [manualVideoFile, setManualVideoFile] = useState(null);
   const [transcript, setTranscript] = useState("");
   const [sentiment, setSentiment] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+  const isMediaRecorderSupported =
+    typeof window !== "undefined" &&
+    !!window.navigator?.mediaDevices?.getUserMedia &&
+    typeof window.MediaRecorder !== "undefined";
 
   const stopStream = () => {
     if (streamRef.current) {
@@ -55,6 +60,9 @@ export default function VideoConsent({ onComplete }) {
     setError("");
     setCountdown(3);
     try {
+      if (!isMediaRecorderSupported) {
+        throw new Error("Live recording not supported on this browser. Upload a consent video file.");
+      }
       if (!navigator.mediaDevices?.getUserMedia) {
         throw new Error("Camera is not supported in this browser.");
       }
@@ -164,8 +172,9 @@ export default function VideoConsent({ onComplete }) {
   };
 
   const handleSubmit = async () => {
-    if (!recordedBlob) {
-      setError("Please record a video first.");
+    const consentBlob = recordedBlob || manualVideoFile;
+    if (!consentBlob) {
+      setError("Please record or upload a video first.");
       return;
     }
     if (!user?.uid) {
@@ -180,7 +189,8 @@ export default function VideoConsent({ onComplete }) {
       const result = await analyzeSentiment(transcript || "I am selling this property voluntarily");
       setSentiment(result);
 
-      const videoUrl = await uploadFile(`sellers/${user.uid}/consent_video.webm`, recordedBlob);
+      const extension = manualVideoFile?.name?.split(".").pop() || "webm";
+      const videoUrl = await uploadFile(`sellers/${user.uid}/consent_video.${extension}`, consentBlob);
       const aiApproved = result.label !== "negative";
 
       await saveVideoConsent(user.uid, {
@@ -195,7 +205,7 @@ export default function VideoConsent({ onComplete }) {
       });
 
       setPhase("done");
-      if (onComplete) onComplete({ aiApproved, sentiment: result });
+      if (onComplete) onComplete({ aiApproved, sentiment: result, videoUrl });
     } catch (err) {
       setError(err?.message || "Video submission failed.");
       setPhase("preview");
@@ -252,9 +262,30 @@ export default function VideoConsent({ onComplete }) {
           )}
 
           {isOwner !== null && (isOwner || relation) && (
-            <Button onClick={startPreview} className="w-full">
-              Start Video Recording
-            </Button>
+            <>
+              {isMediaRecorderSupported ? (
+                <Button onClick={startPreview} className="w-full">
+                  Start Video Recording
+                </Button>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  <Alert type="warning">
+                    Your browser does not support direct recording. Upload a consent video file.
+                  </Alert>
+                  <input
+                    type="file"
+                    accept="video/*"
+                    onChange={(e) => setManualVideoFile(e.target.files?.[0] || null)}
+                    className="w-full text-sm text-slate-200"
+                  />
+                  {manualVideoFile && (
+                    <Button onClick={handleSubmit} loading={uploading} className="w-full">
+                      Upload and Submit Video
+                    </Button>
+                  )}
+                </div>
+              )}
+            </>
           )}
         </div>
       )}

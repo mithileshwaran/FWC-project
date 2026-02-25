@@ -37,16 +37,25 @@ export default function ProfilePage() {
     setLoading(true);
     try {
       await saveProfile(user.uid, { ...form, uid: user.uid });
-      await sendEmailOtp();
-      navigate("/verify-email-otp");
+
+      try {
+        await sendEmailOtp();
+        navigate("/verify-email-otp");
+      } catch (otpErr) {
+        navigate("/verify-email-otp", {
+          state: {
+            info: "Profile saved. OTP send failed once, please click Resend OTP.",
+          },
+        });
+      }
     } catch (err) {
-      const msg = err?.message || "";
+      const msg = (err?.message || "").toLowerCase();
       if (msg.includes("permission")) {
-        setError("Permission denied. Check Firestore rules for signed-in users.");
-      } else if (msg.includes("network")) {
-        setError("Network issue. Please check internet and try again.");
+        setError("Permission denied. Firestore rules must allow write for the logged-in user.");
+      } else if (msg.includes("network") || msg.includes("offline") || msg.includes("unavailable")) {
+        setError("Network issue while saving profile. Check internet and retry.");
       } else {
-        setError(msg);
+        setError(err?.message || "Failed to save profile.");
       }
     } finally {
       setLoading(false);
@@ -54,14 +63,17 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-stone-50 to-amber-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-lg">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(56,189,248,0.2),transparent_35%),radial-gradient(circle_at_80%_10%,rgba(16,185,129,0.15),transparent_30%),linear-gradient(145deg,#020617_20%,#0f172a_100%)]" />
+      </div>
+
+      <div className="relative w-full max-w-lg">
         <div className="text-center mb-8">
-          <span className="text-4xl">Profile</span>
-          <h1 className="text-2xl font-black text-stone-900 mt-2" style={{ fontFamily: "Georgia, serif" }}>
+          <h1 className="text-3xl font-black text-white mt-2">
             Create Your Profile
           </h1>
-          <p className="text-stone-500 mt-1">Complete details and continue to email OTP verification</p>
+          <p className="text-slate-300 mt-1">Complete details and continue to email OTP verification</p>
         </div>
 
         <Card>
@@ -73,9 +85,9 @@ export default function ProfilePage() {
               <Input label="Mobile Number" type="tel" placeholder="9876543210" value={form.mobile} onChange={set("mobile")} />
               <Input label="Date of Birth" type="date" value={form.dob} onChange={set("dob")} />
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-semibold text-stone-700 uppercase tracking-wide">Address</label>
+                <label className="text-xs font-semibold text-slate-300 uppercase tracking-wide">Address</label>
                 <textarea
-                  className="w-full px-4 py-3 rounded-xl border-2 border-stone-200 bg-white focus:outline-none focus:border-amber-500 transition-all text-stone-800 font-medium resize-none"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-700 bg-slate-900 focus:outline-none focus:border-cyan-400 transition-all text-slate-100 font-medium resize-none"
                   rows={3}
                   placeholder="No. 12, Anna Nagar, Chennai - 600040"
                   value={form.address}
