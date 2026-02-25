@@ -16,7 +16,10 @@ export default function AdminLoginPage() {
     e.preventDefault();
     setError("");
 
-    if (adminId.trim() === ADMIN_ID && password === ADMIN_PASSWORD) {
+    const normalizedId = adminId.trim().toLowerCase();
+    const normalizedPassword = password.trim();
+
+    if (normalizedId === ADMIN_ID && normalizedPassword === ADMIN_PASSWORD) {
       localStorage.setItem(ADMIN_SESSION_KEY, "true");
       navigate("/admin", { replace: true });
       return;
@@ -57,10 +60,14 @@ export default function AdminLoginPage() {
                 Login
               </Button>
             </form>
+
+            <p className="text-xs text-slate-400">
+              Default Admin ID: <span className="font-semibold text-slate-200">admin</span> | Password:{" "}
+              <span className="font-semibold text-slate-200">1345678aA@</span>
+            </p>
           </div>
         </Card>
       </div>
     </div>
   );
 }
-
