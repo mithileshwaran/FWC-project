@@ -62,7 +62,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="relative z-10 -mt-24 pb-24 px-6">
+      <section className="relative z-10 -mt-32 pb-24 px-6">
         <div className="mx-auto max-w-7xl rounded-3xl border border-slate-800 bg-slate-900/80 backdrop-blur-md p-8 md:p-12">
           <h2 className="text-3xl md:text-5xl font-bold text-white">Registration Workflow</h2>
           <p className="mt-3 text-slate-300 text-base md:text-lg">Simple step-by-step process for citizens and officers.</p>
