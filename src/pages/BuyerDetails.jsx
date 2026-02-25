@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth.jsx";
 import { saveBuyer, uploadFile, updateVerificationStatus } from "../utils/firestore";
@@ -74,15 +74,11 @@ export default function BuyerDetails() {
       const uid = user.uid;
       setSubmitMessage("Uploading documents...");
       const stamp = Date.now();
-      const [idUrl, addressUrl, propertyUrl] = await withTimeout(
-        Promise.all([
+      const [idUrl, addressUrl, propertyUrl] = await Promise.all([
           uploadFile(`buyers/${uid}/id_proof_${stamp}_${docs.idProof.name}`, docs.idProof),
           uploadFile(`buyers/${uid}/address_proof_${stamp}_${docs.addressProof.name}`, docs.addressProof),
           uploadFile(`buyers/${uid}/property_docs_${stamp}_${docs.propertyDocs.name}`, docs.propertyDocs),
-        ]),
-        60000,
-        "Upload timeout. Please retry with stable network."
-      );
+        ]);
 
       setSubmitMessage("Saving registration...");
       await withTimeout(
@@ -196,3 +192,4 @@ export default function BuyerDetails() {
     </div>
   );
 }
+
