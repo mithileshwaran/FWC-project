@@ -57,13 +57,6 @@ export default function HomePage() {
               >
                 Start Now
               </button>
-              <button
-                type="button"
-                onClick={() => navigate("/dashboard")}
-                className="rounded-xl border border-slate-500 text-slate-100 font-semibold px-6 py-3 hover:bg-slate-800 transition"
-              >
-                View Dashboard
-              </button>
             </div>
           </div>
         </div>

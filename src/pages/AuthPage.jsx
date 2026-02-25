@@ -92,7 +92,7 @@ export default function AuthPage() {
     setLoading(true);
     try {
       await sendResetEmail(email);
-      setSuccess("OTP/reset code sent to your email. Enter it below.");
+      setSuccess("Reset email sent. Check Inbox/Spam and paste the code or link below.");
       setForgotStep("verify");
     } catch (err) {
       setError(err.message.replace("Firebase: ", ""));
@@ -264,7 +264,7 @@ export default function AuthPage() {
                     <Input
                       label="OTP / Reset Code"
                       type="text"
-                      placeholder="Paste OTP code or reset link"
+                      placeholder="Paste reset code or full link from mail"
                       value={resetCode}
                       onChange={(e) => setResetCode(e.target.value)}
                       required

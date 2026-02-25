@@ -74,7 +74,7 @@ export default function EmailOtpPage() {
     setSending(true);
     try {
       await sendEmailOtp();
-      setSuccess("OTP email sent again.");
+      setSuccess("Verification email sent. Check Inbox/Spam and paste the code/link.");
       setSecondsLeft(RESEND_SECONDS);
     } catch (err) {
       setError(err.message.replace("Firebase: ", ""));
@@ -103,7 +103,7 @@ export default function EmailOtpPage() {
             <Input
               label="Email OTP Code or Link"
               type="text"
-              placeholder="Paste OTP code or full email link"
+              placeholder="Paste verification code or full email link"
               value={code}
               onChange={(e) => setCode(e.target.value)}
             />

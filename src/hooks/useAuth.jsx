@@ -1,4 +1,3 @@
-// hooks/useAuth.js
 import { createContext, useContext, useEffect, useState } from "react";
 import {
   createUserWithEmailAndPassword,
@@ -10,10 +9,31 @@ import {
   sendPasswordResetEmail,
   verifyPasswordResetCode,
   confirmPasswordReset,
+  fetchSignInMethodsForEmail,
 } from "firebase/auth";
 import { auth } from "../firebase/config";
 
 const AuthContext = createContext();
+
+const getActionSettings = () => {
+  const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:5173";
+  return {
+    url: `${origin}/auth`,
+    handleCodeInApp: false,
+  };
+};
+
+const friendlyAuthError = (err) => {
+  const code = err?.code || "";
+  if (code.includes("too-many-requests")) return "Too many attempts. Please wait 1-2 minutes and try again.";
+  if (code.includes("invalid-email")) return "Invalid email format.";
+  if (code.includes("user-not-found")) return "No account found with this email.";
+  if (code.includes("network-request-failed")) return "Network issue. Please check internet and retry.";
+  if (code.includes("unauthorized-continue-uri") || code.includes("invalid-continue-uri")) {
+    return "OTP link domain not authorized. Add your site domain in Firebase Authentication > Authorized domains.";
+  }
+  return err?.message?.replace("Firebase: ", "") || "Authentication error.";
+};
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -27,27 +47,58 @@ export function AuthProvider({ children }) {
     return unsub;
   }, []);
 
-  const signup = (email, password) =>
-    createUserWithEmailAndPassword(auth, email, password);
+  const signup = (email, password) => createUserWithEmailAndPassword(auth, email, password);
 
-  const signin = (email, password) =>
-    signInWithEmailAndPassword(auth, email, password);
+  const signin = (email, password) => signInWithEmailAndPassword(auth, email, password);
 
   const logout = () => signOut(auth);
 
-  const sendResetEmail = (email) => sendPasswordResetEmail(auth, email);
-  const verifyResetCode = (code) => verifyPasswordResetCode(auth, code);
-  const resetPassword = (code, newPassword) =>
-    confirmPasswordReset(auth, code, newPassword);
-  const sendEmailOtp = () => {
-    if (!auth.currentUser) throw new Error("Please sign in first.");
-    return sendEmailVerification(auth.currentUser);
+  const sendResetEmail = async (email) => {
+    try {
+      const methods = await fetchSignInMethodsForEmail(auth, email);
+      if (!methods?.length) {
+        throw new Error("No account found with this email.");
+      }
+      await sendPasswordResetEmail(auth, email, getActionSettings());
+    } catch (err) {
+      throw new Error(friendlyAuthError(err));
+    }
   };
+
+  const verifyResetCode = async (code) => {
+    try {
+      return await verifyPasswordResetCode(auth, code);
+    } catch (err) {
+      throw new Error(friendlyAuthError(err));
+    }
+  };
+
+  const resetPassword = async (code, newPassword) => {
+    try {
+      return await confirmPasswordReset(auth, code, newPassword);
+    } catch (err) {
+      throw new Error(friendlyAuthError(err));
+    }
+  };
+
+  const sendEmailOtp = async () => {
+    try {
+      if (!auth.currentUser) throw new Error("Please sign in first.");
+      await sendEmailVerification(auth.currentUser, getActionSettings());
+    } catch (err) {
+      throw new Error(friendlyAuthError(err));
+    }
+  };
+
   const verifyEmailOtp = async (code) => {
-    await applyActionCode(auth, code);
-    if (auth.currentUser) {
-      await auth.currentUser.reload();
-      setUser({ ...auth.currentUser });
+    try {
+      await applyActionCode(auth, code);
+      if (auth.currentUser) {
+        await auth.currentUser.reload();
+        setUser({ ...auth.currentUser });
+      }
+    } catch (err) {
+      throw new Error(friendlyAuthError(err));
     }
   };
 
