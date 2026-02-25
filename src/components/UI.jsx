@@ -25,10 +25,10 @@ export const Input = ({ label, error, className = "", type = "text", ...props })
           <button
             type="button"
             onClick={() => setShowPassword((prev) => !prev)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-cyan-300 text-xs font-semibold"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-cyan-300 text-lg leading-none"
             aria-label={showPassword ? "Hide password" : "Show password"}
           >
-            {showPassword ? "Hide" : "Show"}
+            {showPassword ? "🙈" : "👁"}
           </button>
         )}
       </div>
