@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth.jsx";
 import { Input, Button, Card, Alert } from "../components/UI";
 
 export default function AuthPage() {
   const { signup, signin, sendResetEmail, verifyResetCode, resetPassword } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [mode, setMode] = useState("signin");
   const [email, setEmail] = useState("");
@@ -15,7 +16,7 @@ export default function AuthPage() {
   const [newPassword, setNewPassword] = useState("");
   const [forgotStep, setForgotStep] = useState("email");
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState("");
+  const [success, setSuccess] = useState(location.state?.success || "");
   const [error, setError] = useState("");
 
   const switchMode = (nextMode) => {

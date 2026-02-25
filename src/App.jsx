@@ -2,6 +2,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./hooks/useAuth.jsx";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
 
 import HomePage from "./pages/HomePage";
 import AuthPage from "./pages/AuthPage";
@@ -12,6 +13,7 @@ import BuyerDetails from "./pages/BuyerDetails";
 import SellerDetails from "./pages/SellerDetails";
 import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import AdminLoginPage from "./pages/AdminLoginPage";
 
 export default function App() {
   return (
@@ -21,6 +23,7 @@ export default function App() {
           {/* Public */}
           <Route path="/" element={<HomePage />} />
           <Route path="/auth" element={<AuthPage />} />
+          <Route path="/admin-login" element={<AdminLoginPage />} />
 
           {/* Protected user routes */}
           <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
@@ -32,7 +35,7 @@ export default function App() {
           <Route path="/seller" element={<ProtectedRoute><SellerDetails /></ProtectedRoute>} />
 
           {/* Admin */}
-          <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />

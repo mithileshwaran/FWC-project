@@ -5,7 +5,7 @@ import { saveProfile } from "../utils/firestore";
 import { Input, Button, Card, Alert } from "../components/UI";
 
 export default function ProfilePage() {
-  const { user, sendEmailOtp } = useAuth();
+  const { user, sendEmailOtp, logout } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({
     name: "",
@@ -16,6 +16,7 @@ export default function ProfilePage() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
@@ -36,18 +37,31 @@ export default function ProfilePage() {
 
     setLoading(true);
     try {
-      await saveProfile(user.uid, { ...form, uid: user.uid });
+      const withTimeout = (promise, ms, message) =>
+        Promise.race([
+          promise,
+          new Promise((_, reject) => setTimeout(() => reject(new Error(message)), ms)),
+        ]);
 
+      await withTimeout(
+        saveProfile(user.uid, { ...form, uid: user.uid }),
+        20000,
+        "Saving profile timed out. Please retry."
+      );
+
+      let otpInfo = "Verification email sent.";
       try {
-        await sendEmailOtp();
-        navigate("/verify-email-otp");
-      } catch (otpErr) {
-        navigate("/verify-email-otp", {
-          state: {
-            info: "Profile saved. OTP send failed once, please click Resend OTP.",
-          },
-        });
+        await withTimeout(sendEmailOtp(), 20000, "OTP sending timed out.");
+      } catch {
+        otpInfo = "Profile saved. OTP send failed now; you can resend after login.";
       }
+
+      setSuccess(`Account created successfully. ${otpInfo}`);
+      await logout();
+      navigate("/auth", {
+        replace: true,
+        state: { success: `Account created successfully. ${otpInfo}` },
+      });
     } catch (err) {
       const msg = (err?.message || "").toLowerCase();
       if (msg.includes("permission")) {
@@ -80,6 +94,7 @@ export default function ProfilePage() {
           <div className="p-8">
             <div className="flex flex-col gap-4">
               {error && <Alert type="error">{error}</Alert>}
+              {success && <Alert type="success">{success}</Alert>}
               <Input label="Full Name" placeholder="Arjun Subramaniam" value={form.name} onChange={set("name")} />
               <Input label="Email Address" type="email" placeholder="arjun@example.com" value={form.email} onChange={set("email")} />
               <Input label="Mobile Number" type="tel" placeholder="9876543210" value={form.mobile} onChange={set("mobile")} />

@@ -15,6 +15,7 @@ export default function BuyerDetails() {
   const [error, setError] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [verificationResult, setVerificationResult] = useState(null);
+  const [submitMessage, setSubmitMessage] = useState("");
 
   // Step 1
   const [personal, setPersonal] = useState({
@@ -87,16 +88,32 @@ export default function BuyerDetails() {
       return;
     }
     setError("");
+    setSubmitMessage("Uploading documents...");
     setLoading(true);
     try {
       const uid = user.uid;
-      // Upload files to Firebase Storage
-      const [idUrl, addressUrl, propertyUrl] = await Promise.all([
-        uploadFile(`buyers/${uid}/id_proof`, docs.idProof),
-        uploadFile(`buyers/${uid}/address_proof`, docs.addressProof),
-        uploadFile(`buyers/${uid}/property_docs`, docs.propertyDocs),
-      ]);
+      const withTimeout = (promise, ms, msg) =>
+        Promise.race([
+          promise,
+          new Promise((_, reject) => setTimeout(() => reject(new Error(msg)), ms)),
+        ]);
 
+      const idPath = `buyers/${uid}/id_proof_${Date.now()}_${docs.idProof.name}`;
+      const addressPath = `buyers/${uid}/address_proof_${Date.now()}_${docs.addressProof.name}`;
+      const propertyPath = `buyers/${uid}/property_docs_${Date.now()}_${docs.propertyDocs.name}`;
+
+      // Upload files to Firebase Storage
+      const [idUrl, addressUrl, propertyUrl] = await withTimeout(
+        Promise.all([
+          uploadFile(idPath, docs.idProof),
+          uploadFile(addressPath, docs.addressProof),
+          uploadFile(propertyPath, docs.propertyDocs),
+        ]),
+        60000,
+        "Upload timeout after 60s. Please retry with smaller files or check network."
+      );
+
+      setSubmitMessage("Saving registration...");
       await saveBuyer(uid, {
         uid,
         ...personal,
@@ -108,14 +125,23 @@ export default function BuyerDetails() {
 
       // Verify with TNREGINET
       setVerifying(true);
+      setSubmitMessage("Verifying with TNREGINET...");
       const isVerified = await verifyWithTNREGINET(property.surveyNumber);
       await updateVerificationStatus("buyers", uid, isVerified);
       setVerificationResult(isVerified);
       setVerifying(false);
     } catch (err) {
-      setError(err.message);
+      const msg = (err?.message || "").toLowerCase();
+      if (msg.includes("permission")) {
+        setError("Permission denied. Check Firebase Storage/Firestore rules for this user.");
+      } else if (msg.includes("network") || msg.includes("timeout")) {
+        setError(err.message || "Network timeout. Please retry.");
+      } else {
+        setError(err.message || "Registration failed. Please retry.");
+      }
     } finally {
       setVerifying(false);
+      setSubmitMessage("");
       setLoading(false);
     }
   };
@@ -155,6 +181,7 @@ export default function BuyerDetails() {
           <div className="p-8">
             <StepIndicator steps={STEPS} current={step} />
             {error && <Alert type="error">{error}</Alert>}
+            {submitMessage && <Alert type="info">{submitMessage}</Alert>}
 
             {/* Step 1: Personal */}
             {step === 0 && (

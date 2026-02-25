@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { updateApprovalStatus } from "../utils/firestore";
-import { useAuth } from "../hooks/useAuth.jsx";
 import { Button } from "../components/UI";
 
 export default function AdminDashboard() {
-  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [sellers, setSellers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState({});
@@ -27,16 +27,21 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleAdminLogout = () => {
+    localStorage.removeItem("fwc_admin_auth");
+    navigate("/admin-login", { replace: true });
+  };
+
   const handleApprove = async (uid) => {
     setActionLoading((a) => ({ ...a, [uid]: "approve" }));
-    await updateApprovalStatus(uid, "approved", user?.email || "admin");
+    await updateApprovalStatus(uid, "approved", "admin");
     setSellers((prev) => prev.map((s) => (s.id === uid ? { ...s, approvalStatus: "approved" } : s)));
     setActionLoading((a) => ({ ...a, [uid]: null }));
   };
 
   const handleReject = async (uid) => {
     setActionLoading((a) => ({ ...a, [uid]: "reject" }));
-    await updateApprovalStatus(uid, "rejected", user?.email || "admin");
+    await updateApprovalStatus(uid, "rejected", "admin");
     setSellers((prev) => prev.map((s) => (s.id === uid ? { ...s, approvalStatus: "rejected" } : s)));
     setActionLoading((a) => ({ ...a, [uid]: null }));
   };
@@ -67,13 +72,13 @@ export default function AdminDashboard() {
       <header className="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between">
         <div>
           <h1 className="font-black text-lg text-white">Registrar Admin Dashboard</h1>
-          <p className="text-slate-400 text-xs">TN Land Registry · {user?.email}</p>
+          <p className="text-slate-400 text-xs">TN Land Registry - Admin Panel</p>
         </div>
         <div className="flex items-center gap-3">
           <button onClick={fetchSellers} className="text-slate-400 hover:text-white text-sm font-medium transition-colors">
             Refresh
           </button>
-          <button onClick={logout} className="bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-xl text-sm font-bold transition-all">
+          <button onClick={handleAdminLogout} className="bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-xl text-sm font-bold transition-all">
             Sign Out
           </button>
         </div>
@@ -126,22 +131,29 @@ export default function AdminDashboard() {
                       <div className="flex items-center gap-3 mb-2 flex-wrap">
                         <h3 className="font-black text-white text-lg">{seller.name || "Unknown"}</h3>
                         {sentimentBadge(sentimentLabel)}
-                        <span className={`text-xs font-bold px-2 py-1 rounded-full ${
-                          status === "approved"
-                            ? "bg-emerald-900 text-emerald-400"
-                            : status === "rejected"
-                            ? "bg-red-900 text-red-400"
-                            : "bg-amber-900 text-amber-400"
-                        }`}>
+                        <span
+                          className={`text-xs font-bold px-2 py-1 rounded-full ${
+                            status === "approved"
+                              ? "bg-emerald-900 text-emerald-400"
+                              : status === "rejected"
+                              ? "bg-red-900 text-red-400"
+                              : "bg-amber-900 text-amber-400"
+                          }`}
+                        >
                           {status.toUpperCase()}
                         </span>
                       </div>
-                      <p className="text-slate-400 text-sm">{seller.email} · {seller.mobile}</p>
+                      <p className="text-slate-400 text-sm">{seller.email} | {seller.mobile}</p>
                       <p className="text-slate-400 text-sm mt-1">
                         Survey: <span className="text-cyan-300 font-mono">{seller.property?.surveyNumber}</span>
                       </p>
                       {consent?.videoUrl && (
-                        <a href={consent.videoUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 mt-2 text-cyan-300 hover:text-cyan-200 text-sm font-medium">
+                        <a
+                          href={consent.videoUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 mt-2 text-cyan-300 hover:text-cyan-200 text-sm font-medium"
+                        >
                           View Consent Video
                         </a>
                       )}
