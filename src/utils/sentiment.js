@@ -12,6 +12,12 @@ const HF_TOKEN = "YOUR_HF_TOKEN"; // Replace with your free Hugging Face token
  */
 export const analyzeSentiment = async (text) => {
   try {
+    if (!HF_TOKEN || HF_TOKEN === "YOUR_HF_TOKEN") {
+      return { label: "neutral", score: 0, skipped: true };
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
     const res = await fetch(HF_API_URL, {
       method: "POST",
       headers: {
@@ -19,7 +25,9 @@ export const analyzeSentiment = async (text) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ inputs: text }),
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
     const data = await res.json();
     if (!Array.isArray(data) || !data[0]) throw new Error("Invalid response");
     // data[0] is array of {label, score}

@@ -179,22 +179,37 @@ export default function VideoConsent({ onComplete }) {
     setUploading(true);
     setPhase("analyzing");
     try {
-      const result = await analyzeSentiment(transcript || "I am selling this property voluntarily");
+      const withTimeout = (promise, ms, msg) =>
+        Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error(msg)), ms))]);
+
+      const result = await withTimeout(
+        analyzeSentiment(transcript || "I am selling this property voluntarily"),
+        10000,
+        "AI analysis timeout"
+      );
       setSentiment(result);
 
       const extension = manualVideoFile?.name?.split(".").pop() || "webm";
-      const videoUrl = await uploadFile(`sellers/${user.uid}/consent_video.${extension}`, consentBlob);
+      const videoUrl = await withTimeout(
+        uploadFile(`sellers/${user.uid}/consent_video.${extension}`, consentBlob),
+        60000,
+        "Video upload timeout"
+      );
 
-      await saveVideoConsent(user.uid, {
-        videoUrl,
-        transcript,
-        sentiment: result,
-        aiApproved: result.label !== "negative",
-        isOwner,
-        relation: isOwner ? "self" : relation,
-        recordedAt: new Date().toISOString(),
-        reviewStatus: "under_review",
-      });
+      await withTimeout(
+        saveVideoConsent(user.uid, {
+          videoUrl,
+          transcript,
+          sentiment: result,
+          aiApproved: result.label !== "negative",
+          isOwner,
+          relation: isOwner ? "self" : relation,
+          recordedAt: new Date().toISOString(),
+          reviewStatus: "under_review",
+        }),
+        15000,
+        "Saving video consent timed out"
+      );
 
       setPhase("done");
       if (onComplete) onComplete({ aiApproved: result.label !== "negative", sentiment: result, videoUrl });

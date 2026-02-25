@@ -57,7 +57,7 @@ export default function ProfilePage() {
       }
 
       setSuccess(`Account created successfully. ${otpInfo}`);
-      await logout();
+      logout().catch(() => {});
       navigate("/auth", {
         replace: true,
         state: { success: `Account created successfully. ${otpInfo}` },
