@@ -13,7 +13,6 @@ export default function VideoConsent({ onComplete }) {
   const mediaRecorderRef = useRef(null);
   const recognitionRef = useRef(null);
   const streamRef = useRef(null);
-  const autoStopRef = useRef(null);
   const chunksRef = useRef([]);
 
   const [phase, setPhase] = useState("ownership");
@@ -26,6 +25,7 @@ export default function VideoConsent({ onComplete }) {
   const [sentiment, setSentiment] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+
   const isMediaRecorderSupported =
     typeof window !== "undefined" &&
     !!window.navigator?.mediaDevices?.getUserMedia &&
@@ -40,7 +40,6 @@ export default function VideoConsent({ onComplete }) {
 
   useEffect(() => {
     return () => {
-      if (autoStopRef.current) clearTimeout(autoStopRef.current);
       if (recognitionRef.current) recognitionRef.current.stop();
       stopStream();
     };
@@ -56,6 +55,16 @@ export default function VideoConsent({ onComplete }) {
     return () => clearTimeout(t);
   }, [phase, countdown]);
 
+  useEffect(() => {
+    const showLiveFeed = phase === "countdown" || phase === "recording";
+    if (!showLiveFeed || !videoRef.current || !streamRef.current) return;
+    videoRef.current.srcObject = streamRef.current;
+    videoRef.current.muted = true;
+    videoRef.current.controls = false;
+    videoRef.current.playsInline = true;
+    videoRef.current.play().catch(() => {});
+  }, [phase]);
+
   const startPreview = async () => {
     setError("");
     setCountdown(3);
@@ -63,25 +72,14 @@ export default function VideoConsent({ onComplete }) {
       if (!isMediaRecorderSupported) {
         throw new Error("Live recording not supported on this browser. Upload a consent video file.");
       }
-      if (!navigator.mediaDevices?.getUserMedia) {
-        throw new Error("Camera is not supported in this browser.");
-      }
       stopStream();
       let stream;
       try {
         stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       } catch {
-        // Fallback when microphone permission is blocked.
         stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
       }
       streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.muted = true;
-        videoRef.current.controls = false;
-        videoRef.current.playsInline = true;
-        await videoRef.current.play().catch(() => {});
-      }
       setPhase("countdown");
     } catch (err) {
       setError(err?.message || "Camera permission denied.");
@@ -92,7 +90,7 @@ export default function VideoConsent({ onComplete }) {
 
   const startRecording = () => {
     try {
-      const stream = streamRef.current || videoRef.current?.srcObject;
+      const stream = streamRef.current;
       if (!stream) {
         setError("Camera stream not available. Try again.");
         setPhase("ownership");
@@ -100,11 +98,7 @@ export default function VideoConsent({ onComplete }) {
       }
 
       chunksRef.current = [];
-      const formats = [
-        "video/webm;codecs=vp9,opus",
-        "video/webm;codecs=vp8,opus",
-        "video/webm",
-      ];
+      const formats = ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm"];
       const mimeType = formats.find((f) => MediaRecorder.isTypeSupported(f));
       const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
 
@@ -142,20 +136,20 @@ export default function VideoConsent({ onComplete }) {
         rec.continuous = true;
         rec.interimResults = false;
         rec.onresult = (e) => {
-          const text = Array.from(e.results).map((r) => r[0].transcript).join(" ");
+          const text = Array.from(e.results)
+            .map((r) => r[0].transcript)
+            .join(" ");
           setTranscript(text);
         };
         recognitionRef.current = rec;
         try {
           rec.start();
         } catch {
-          // Speech recognition permission errors should not block video recording.
+          // Do nothing
         }
       }
 
       setPhase("recording");
-      if (autoStopRef.current) clearTimeout(autoStopRef.current);
-      autoStopRef.current = setTimeout(() => stopRecording(), 60000);
     } catch (err) {
       setError(err?.message || "Unable to start recording on this browser.");
       setPhase("ownership");
@@ -164,7 +158,6 @@ export default function VideoConsent({ onComplete }) {
   };
 
   const stopRecording = () => {
-    if (autoStopRef.current) clearTimeout(autoStopRef.current);
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop();
     }
@@ -191,21 +184,20 @@ export default function VideoConsent({ onComplete }) {
 
       const extension = manualVideoFile?.name?.split(".").pop() || "webm";
       const videoUrl = await uploadFile(`sellers/${user.uid}/consent_video.${extension}`, consentBlob);
-      const aiApproved = result.label !== "negative";
 
       await saveVideoConsent(user.uid, {
         videoUrl,
         transcript,
         sentiment: result,
-        aiApproved,
+        aiApproved: result.label !== "negative",
         isOwner,
         relation: isOwner ? "self" : relation,
         recordedAt: new Date().toISOString(),
-        manualReviewRequired: !aiApproved,
+        reviewStatus: "under_review",
       });
 
       setPhase("done");
-      if (onComplete) onComplete({ aiApproved, sentiment: result, videoUrl });
+      if (onComplete) onComplete({ aiApproved: result.label !== "negative", sentiment: result, videoUrl });
     } catch (err) {
       setError(err?.message || "Video submission failed.");
       setPhase("preview");
@@ -220,18 +212,14 @@ export default function VideoConsent({ onComplete }) {
 
       {phase === "ownership" && (
         <div className="space-y-5">
-          <Alert type="info">
-            Please confirm relation and record consent video.
-          </Alert>
-          <p className="font-semibold text-stone-800">
-            Is the person recording the video the land owner?
-          </p>
+          <Alert type="info">Please confirm relation and record consent video.</Alert>
+          <p className="font-semibold text-slate-200">Is the person recording the video the land owner?</p>
           <div className="flex gap-3">
             <button
               type="button"
               onClick={() => setIsOwner(true)}
               className={`flex-1 py-3 rounded-xl border-2 font-bold transition-all ${
-                isOwner === true ? "border-stone-900 bg-stone-900 text-white" : "border-stone-200 text-stone-600"
+                isOwner === true ? "border-cyan-400 bg-cyan-400 text-slate-900" : "border-slate-700 text-slate-300"
               }`}
             >
               Yes, owner
@@ -240,7 +228,7 @@ export default function VideoConsent({ onComplete }) {
               type="button"
               onClick={() => setIsOwner(false)}
               className={`flex-1 py-3 rounded-xl border-2 font-bold transition-all ${
-                isOwner === false ? "border-stone-900 bg-stone-900 text-white" : "border-stone-200 text-stone-600"
+                isOwner === false ? "border-cyan-400 bg-cyan-400 text-slate-900" : "border-slate-700 text-slate-300"
               }`}
             >
               Representative
@@ -249,14 +237,12 @@ export default function VideoConsent({ onComplete }) {
 
           {isOwner === false && (
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-semibold text-stone-700 uppercase tracking-wide">
-                Relation to owner
-              </label>
+              <label className="text-xs font-semibold text-slate-300 uppercase tracking-wide">Relation to owner</label>
               <input
                 value={relation}
                 onChange={(e) => setRelation(e.target.value)}
                 placeholder="Spouse / Son / Legal Representative"
-                className="w-full px-4 py-3 rounded-xl border-2 border-stone-200 bg-white focus:outline-none focus:border-amber-500"
+                className="w-full px-4 py-3 rounded-xl border border-slate-700 bg-slate-900 focus:outline-none focus:border-cyan-400"
               />
             </div>
           )}
@@ -269,9 +255,7 @@ export default function VideoConsent({ onComplete }) {
                 </Button>
               ) : (
                 <div className="flex flex-col gap-3">
-                  <Alert type="warning">
-                    Your browser does not support direct recording. Upload a consent video file.
-                  </Alert>
+                  <Alert type="warning">Your browser does not support direct recording. Upload a consent video file.</Alert>
                   <input
                     type="file"
                     accept="video/*"
@@ -291,9 +275,14 @@ export default function VideoConsent({ onComplete }) {
       )}
 
       {phase === "countdown" && (
-        <div className="text-center py-10">
-          <div className="text-8xl font-black text-stone-900 animate-pulse">{countdown === 0 ? "REC" : countdown}</div>
-          <p className="text-stone-500 mt-4 font-medium">Recording starts...</p>
+        <div className="flex flex-col gap-4">
+          <div className="relative">
+            <video ref={videoRef} className="w-full rounded-xl border border-slate-700 bg-black" style={{ maxHeight: 320 }} />
+            <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-xl">
+              <div className="text-7xl font-black text-white animate-pulse">{countdown}</div>
+            </div>
+          </div>
+          <p className="text-slate-300 text-center font-medium">Recording starts now.</p>
         </div>
       )}
 
@@ -302,20 +291,16 @@ export default function VideoConsent({ onComplete }) {
           {phase === "recording" && (
             <div className="flex items-center gap-2 justify-center">
               <span className="animate-pulse w-3 h-3 rounded-full bg-red-500 inline-block" />
-              <span className="text-sm font-bold text-red-600">RECORDING</span>
+              <span className="text-sm font-bold text-red-400">RECORDING</span>
             </div>
           )}
 
-          <video
-            ref={videoRef}
-            className="w-full rounded-xl border-2 border-stone-200 bg-black"
-            style={{ maxHeight: 280 }}
-          />
+          <video ref={videoRef} className="w-full rounded-xl border border-slate-700 bg-black" style={{ maxHeight: 320 }} />
 
           {phase === "recording" && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-              <p className="text-sm text-stone-700 font-medium mb-1">Consent Script</p>
-              <p className="text-sm text-stone-600 italic">{CONSENT_SCRIPT}</p>
+            <div className="bg-amber-950/50 border border-amber-800 rounded-xl p-4">
+              <p className="text-sm text-amber-200 font-medium mb-1">Consent Script</p>
+              <p className="text-sm text-amber-100 italic">{CONSENT_SCRIPT}</p>
             </div>
           )}
 
@@ -350,16 +335,15 @@ export default function VideoConsent({ onComplete }) {
 
       {phase === "analyzing" && (
         <div className="text-center py-8">
-          <p className="font-bold text-stone-900">Analyzing and uploading video...</p>
+          <p className="font-bold text-white">Analyzing with AI and uploading video...</p>
         </div>
       )}
 
       {phase === "done" && sentiment && (
         <div className="text-center space-y-3">
-          <h3 className="text-xl font-black text-stone-900">
-            {sentiment.label === "negative" ? "Flagged for Manual Review" : "Video Consent Accepted"}
-          </h3>
-          <p className="text-stone-500 text-sm">
+          <h3 className="text-xl font-black text-white">Your Video Is Under Review</h3>
+          <p className="text-slate-300 text-sm">AI analysis completed. Admin verification is pending.</p>
+          <p className="text-slate-400 text-sm">
             AI sentiment: <strong>{sentiment.label.toUpperCase()}</strong>
           </p>
         </div>
