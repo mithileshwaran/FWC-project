@@ -9,6 +9,9 @@ const STEPS = ["Personal", "Property", "Documents"];
 export default function BuyerDetails() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const today = new Date();
+  const maxDob = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+  const maxDobStr = `${maxDob.getFullYear()}-${String(maxDob.getMonth() + 1).padStart(2, "0")}-${String(maxDob.getDate()).padStart(2, "0")}`;
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -22,6 +25,16 @@ export default function BuyerDetails() {
 
   const setP = (k) => (e) => setPersonal((prev) => ({ ...prev, [k]: e.target.value }));
   const setProp = (k) => (e) => setProperty((prev) => ({ ...prev, [k]: e.target.value }));
+  const isAtLeast18 = (dobStr) => {
+    if (!dobStr) return false;
+    const dob = new Date(`${dobStr}T00:00:00`);
+    if (Number.isNaN(dob.getTime())) return false;
+    const now = new Date();
+    let age = now.getFullYear() - dob.getFullYear();
+    const m = now.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) age -= 1;
+    return age >= 18;
+  };
 
   const withTimeout = (promise, ms, msg) =>
     Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error(msg)), ms))]);
@@ -37,6 +50,9 @@ export default function BuyerDetails() {
   const validateStep = () => {
     if (step === 0 && (!personal.name || !personal.email || !personal.mobile || !personal.dob || !personal.address)) {
       return "Please fill all personal details.";
+    }
+    if (step === 0 && !isAtLeast18(personal.dob)) {
+      return "You must be at least 18 years old.";
     }
     if (step === 1 && (!property.surveyNumber || !property.location || !property.size)) {
       return "Please fill all property details.";
@@ -149,7 +165,7 @@ export default function BuyerDetails() {
                 <Input label="Full Name" value={personal.name} onChange={setP("name")} />
                 <Input label="Email" type="email" value={personal.email} onChange={setP("email")} />
                 <Input label="Mobile" type="tel" value={personal.mobile} onChange={setP("mobile")} />
-                <Input label="Date of Birth" type="date" value={personal.dob} onChange={setP("dob")} />
+                <Input label="Date of Birth" type="date" value={personal.dob} onChange={setP("dob")} max={maxDobStr} />
                 <textarea
                   className="w-full px-4 py-3 rounded-xl border border-slate-700 bg-slate-900 focus:outline-none focus:border-cyan-400 transition-all text-slate-100 font-medium resize-none"
                   rows={3}

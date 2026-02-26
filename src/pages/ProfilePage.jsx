@@ -7,6 +7,9 @@ import { Input, Button, Card, Alert } from "../components/UI";
 export default function ProfilePage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const today = new Date();
+  const maxDob = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+  const maxDobStr = `${maxDob.getFullYear()}-${String(maxDob.getMonth() + 1).padStart(2, "0")}-${String(maxDob.getDate()).padStart(2, "0")}`;
   const [form, setForm] = useState({
     name: "",
     email: user?.email || "",
@@ -19,6 +22,16 @@ export default function ProfilePage() {
   const [success, setSuccess] = useState("");
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  const isAtLeast18 = (dobStr) => {
+    if (!dobStr) return false;
+    const dob = new Date(`${dobStr}T00:00:00`);
+    if (Number.isNaN(dob.getTime())) return false;
+    const now = new Date();
+    let age = now.getFullYear() - dob.getFullYear();
+    const m = now.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) age -= 1;
+    return age >= 18;
+  };
 
   const handleSave = async () => {
     setError("");
@@ -32,6 +45,10 @@ export default function ProfilePage() {
     }
     if (form.mobile.replace(/\D/g, "").length < 10) {
       setError("Enter a valid 10-digit mobile number.");
+      return;
+    }
+    if (!isAtLeast18(form.dob)) {
+      setError("You must be at least 18 years old.");
       return;
     }
 
@@ -94,7 +111,7 @@ export default function ProfilePage() {
               <Input label="Full Name" placeholder="Arjun Subramaniam" value={form.name} onChange={set("name")} />
               <Input label="Email Address" type="email" placeholder="arjun@example.com" value={form.email} onChange={set("email")} />
               <Input label="Mobile Number" type="tel" placeholder="9876543210" value={form.mobile} onChange={set("mobile")} />
-              <Input label="Date of Birth" type="date" value={form.dob} onChange={set("dob")} />
+              <Input label="Date of Birth" type="date" value={form.dob} onChange={set("dob")} max={maxDobStr} />
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-semibold text-slate-300 uppercase tracking-wide">Address</label>
                 <textarea
