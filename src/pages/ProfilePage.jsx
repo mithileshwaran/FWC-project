@@ -1,19 +1,21 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth.jsx";
-import { saveProfile } from "../utils/firestore";
+import { saveProfile, getProfile } from "../utils/firestore";
 import { Input, Button, Card, Alert } from "../components/UI";
 
 export default function ProfilePage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const today = new Date();
   const maxDob = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
   const maxDobStr = `${maxDob.getFullYear()}-${String(maxDob.getMonth() + 1).padStart(2, "0")}-${String(maxDob.getDate()).padStart(2, "0")}`;
+  const prefilledPhone = location.state?.phone || sessionStorage.getItem("signup_phone") || "";
   const [form, setForm] = useState({
     name: "",
     email: user?.email || "",
-    mobile: "",
+    mobile: prefilledPhone,
     dob: "",
     address: "",
   });
@@ -60,11 +62,21 @@ export default function ProfilePage() {
           new Promise((_, reject) => setTimeout(() => reject(new Error(message)), ms)),
         ]);
 
-      await withTimeout(
-        saveProfile(user.uid, { ...form, uid: user.uid }),
-        45000,
-        "Saving profile timed out. Please retry."
-      );
+      try {
+        await withTimeout(
+          saveProfile(user.uid, { ...form, uid: user.uid }),
+          45000,
+          "Saving profile timed out. Please retry."
+        );
+      } catch (err) {
+        const msg = (err?.message || "").toLowerCase();
+        if (msg.includes("timed out")) {
+          const existing = await getProfile(user.uid);
+          if (!existing) throw err;
+        } else {
+          throw err;
+        }
+      }
 
       const successMsg = "Your profile created successfully.";
       setSuccess(successMsg);

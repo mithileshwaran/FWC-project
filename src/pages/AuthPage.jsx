@@ -75,7 +75,8 @@ export default function AuthPage() {
     setLoading(true);
     try {
       await signup(email, password);
-      navigate("/profile");
+      sessionStorage.setItem("signup_phone", phone);
+      navigate("/profile", { state: { phone } });
     } catch (err) {
       setError(err.message.replace("Firebase: ", ""));
     } finally {
