@@ -5,7 +5,7 @@ import { saveProfile } from "../utils/firestore";
 import { Input, Button, Card, Alert } from "../components/UI";
 
 export default function ProfilePage() {
-  const { user, sendEmailOtp, logout } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({
     name: "",
@@ -45,23 +45,19 @@ export default function ProfilePage() {
 
       await withTimeout(
         saveProfile(user.uid, { ...form, uid: user.uid }),
-        20000,
+        45000,
         "Saving profile timed out. Please retry."
       );
 
-      let otpInfo = "Verification email sent.";
-      try {
-        await withTimeout(sendEmailOtp(), 20000, "OTP sending timed out.");
-      } catch {
-        otpInfo = "Profile saved. OTP send failed now; you can resend after login.";
-      }
-
-      setSuccess(`Account created successfully. ${otpInfo}`);
-      logout().catch(() => {});
-      navigate("/auth", {
-        replace: true,
-        state: { success: `Account created successfully. ${otpInfo}` },
-      });
+      const successMsg = "Your profile created successfully.";
+      setSuccess(successMsg);
+      setTimeout(() => {
+        logout().catch(() => {});
+        navigate("/auth", {
+          replace: true,
+          state: { success: successMsg },
+        });
+      }, 1200);
     } catch (err) {
       const msg = (err?.message || "").toLowerCase();
       if (msg.includes("permission")) {
@@ -87,7 +83,7 @@ export default function ProfilePage() {
           <h1 className="text-3xl font-black text-white mt-2">
             Create Your Profile
           </h1>
-          <p className="text-slate-300 mt-1">Complete details and continue to email OTP verification</p>
+          <p className="text-slate-300 mt-1">Complete details and save your profile</p>
         </div>
 
         <Card>
@@ -110,7 +106,7 @@ export default function ProfilePage() {
                 />
               </div>
               <Button loading={loading} onClick={handleSave} className="w-full mt-2">
-                Save Profile and Send OTP
+                Save Profile
               </Button>
             </div>
           </div>
