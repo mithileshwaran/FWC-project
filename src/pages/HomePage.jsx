@@ -27,13 +27,22 @@ export default function HomePage() {
       <section className="relative min-h-screen overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(56,189,248,0.2),transparent_35%),radial-gradient(circle_at_80%_10%,rgba(16,185,129,0.15),transparent_30%),linear-gradient(145deg,#020617_20%,#0f172a_100%)]" />
 
-        <button
-          type="button"
-          onClick={() => navigate("/auth")}
-          className="fixed right-6 top-6 z-20 rounded-full bg-cyan-400 text-slate-900 text-sm font-black tracking-wide px-5 py-3 shadow-lg hover:bg-cyan-300 transition"
-        >
-          LOGIN
-        </button>
+        <div className="fixed right-6 top-7 z-20 flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => navigate("/auth")}
+            className="rounded-full bg-cyan-400 text-slate-900 text-sm font-black tracking-wide px-5 py-3 shadow-lg hover:bg-cyan-300 transition"
+          >
+            LOGIN
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate("/auth", { state: { mode: "signup" } })}
+            className="rounded-full border border-cyan-300 text-cyan-200 text-sm font-black tracking-wide px-5 py-3 shadow-lg hover:bg-cyan-400/10 transition"
+          >
+            SIGN UP
+          </button>
+        </div>
 
         <div className="relative z-10 mx-auto max-w-7xl px-6 min-h-screen flex flex-col justify-center md:justify-start md:pt-28">
           <div className="max-w-4xl">
