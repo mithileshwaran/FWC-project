@@ -261,7 +261,7 @@ export default function VideoConsent({ onComplete }) {
                 value={relation}
                 onChange={(e) => setRelation(e.target.value)}
                 placeholder="Spouse / Son / Legal Representative"
-                className="w-full px-4 py-3 rounded-xl border border-slate-700 bg-slate-900 focus:outline-none focus:border-cyan-400"
+                className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-slate-100 text-slate-900 placeholder-slate-500 focus:outline-none focus:border-cyan-500"
               />
             </div>
           )}
