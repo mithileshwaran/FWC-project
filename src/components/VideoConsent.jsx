@@ -214,7 +214,11 @@ export default function VideoConsent({ onComplete }) {
       setPhase("done");
       if (onComplete) onComplete({ aiApproved: result.label !== "negative", sentiment: result, videoUrl });
     } catch (err) {
-      setError(err?.message || "Video submission failed.");
+      if (err?.code === "storage/retry-limit-exceeded") {
+        setError("Video upload timed out. Check internet/Firebase Storage bucket and retry.");
+      } else {
+        setError(err?.message || "Video submission failed.");
+      }
       setPhase("preview");
     } finally {
       setUploading(false);

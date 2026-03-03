@@ -131,7 +131,7 @@ export const FileUpload = ({ label, accept, onChange, fileName }) => (
         group-hover:border-cyan-400 transition-all bg-slate-950"
       >
         {fileName ? (
-          <span className="text-sm text-emerald-400 font-semibold">Uploaded: {fileName}</span>
+          <span className="text-sm text-emerald-400 font-semibold">Selected: {fileName}</span>
         ) : (
           <span className="text-sm text-slate-400">
             Click to upload <span className="text-cyan-400 font-bold">file</span>

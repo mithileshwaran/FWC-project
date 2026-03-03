@@ -31,14 +31,14 @@ export default function HomePage() {
           <button
             type="button"
             onClick={() => navigate("/auth")}
-            className="rounded-full bg-cyan-400 text-slate-900 text-sm font-black tracking-wide px-5 py-3 shadow-lg hover:bg-cyan-300 transition"
+            className="rounded-full border border-cyan-300 text-cyan-200 text-sm font-black tracking-wide px-5 py-3 shadow-lg hover:bg-cyan-400/10 transition"
           >
             LOGIN
           </button>
           <button
             type="button"
             onClick={() => navigate("/auth", { state: { mode: "signup" } })}
-            className="rounded-full border border-cyan-300 text-cyan-200 text-sm font-black tracking-wide px-5 py-3 shadow-lg hover:bg-cyan-400/10 transition"
+            className="rounded-full bg-cyan-400 text-slate-900 text-sm font-black tracking-wide px-5 py-3 shadow-lg hover:bg-cyan-300 transition"
           >
             SIGN UP
           </button>

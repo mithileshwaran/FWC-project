@@ -104,8 +104,11 @@ export default function SellerDetails() {
         // keep silent; submission already completed.
       }
     } catch (err) {
+      const code = err?.code || "";
       const msg = (err?.message || "").toLowerCase();
-      if (msg.includes("permission")) {
+      if (code === "storage/retry-limit-exceeded") {
+        setError("Upload timed out. Check internet/Firebase Storage bucket and try again.");
+      } else if (msg.includes("permission") || code === "storage/unauthorized") {
         setError("Permission denied. Check Firebase Storage/Firestore rules.");
       } else if (msg.includes("network") || msg.includes("timeout")) {
         setError(err.message || "Network issue. Please retry.");

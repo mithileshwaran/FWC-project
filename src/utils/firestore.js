@@ -1,6 +1,6 @@
 // utils/firestore.js
 import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { db, storage } from "../firebase/config";
 
 // ── Profile ──────────────────────────────────────────────────────────────────
@@ -34,10 +34,30 @@ export const getSeller = async (uid) => {
 };
 
 // ── Storage upload ────────────────────────────────────────────────────────────
-export const uploadFile = async (path, file) => {
+export const uploadFile = async (path, file, options = {}) => {
+  const { retries = 1 } = options;
   const storageRef = ref(storage, path);
-  await uploadBytes(storageRef, file);
-  return getDownloadURL(storageRef);
+
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    try {
+      await new Promise((resolve, reject) => {
+        const task = uploadBytesResumable(storageRef, file);
+        task.on(
+          "state_changed",
+          undefined,
+          (error) => reject(error),
+          () => resolve()
+        );
+      });
+      return getDownloadURL(storageRef);
+    } catch (error) {
+      const isRetryLimit = error?.code === "storage/retry-limit-exceeded";
+      if (!isRetryLimit || attempt === retries) {
+        throw error;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+    }
+  }
 };
 
 // ── Verification status ───────────────────────────────────────────────────────
