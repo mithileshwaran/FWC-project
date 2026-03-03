@@ -45,8 +45,9 @@ export default function BuyerDetails() {
       const email = personal.email.trim();
       const mobile = personal.mobile.trim();
       const address = personal.address.trim();
+      const dob = personal.dob;
 
-      if (!name || !email || !mobile || !personal.dob || !address)
+      if (!name || !email || !mobile || !dob || !address)
         return "Please fill all personal details.";
       if (!NAME_REGEX.test(name)) {
         return "Enter a valid full name.";
@@ -56,6 +57,17 @@ export default function BuyerDetails() {
       }
       if (!MOBILE_REGEX.test(mobile)) {
         return "Enter a valid mobile number (10 digits or +91 format).";
+      }
+
+      const birthDate = new Date(dob);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age -= 1;
+      }
+      if (Number.isNaN(birthDate.getTime()) || age < 18) {
+        return "Buyer must be at least 18 years old.";
       }
     }
     if (step === 1) {
