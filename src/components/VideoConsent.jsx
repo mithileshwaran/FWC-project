@@ -164,9 +164,11 @@ export default function VideoConsent({ onComplete }) {
             </p>
           </div>
 
-          <p className="text-base font-bold text-white">
-            Is the person recording the video the land owner?
-          </p>
+          <div className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3">
+            <p className="text-base font-bold text-white">
+              Is the person recording the video the land owner?
+            </p>
+          </div>
 
           <div className="flex gap-3">
             <button
