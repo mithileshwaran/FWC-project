@@ -6,6 +6,9 @@ import { saveBuyer, updateVerificationStatus } from "../utils/firestore";
 import { Input, Button, Card, StepIndicator, FileUpload, Alert } from "../components/UI";
 
 const STEPS = ["Personal", "Property", "Documents"];
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MOBILE_REGEX = /^(?:\+91[\s-]?)?[6-9]\d{9}$/;
+const NAME_REGEX = /^[A-Za-z][A-Za-z\s.'-]{1,}$/;
 
 export default function BuyerDetails() {
   const { user } = useAuth();
@@ -38,8 +41,22 @@ export default function BuyerDetails() {
 
   const validateStep = () => {
     if (step === 0) {
-      if (!personal.name || !personal.email || !personal.mobile || !personal.dob || !personal.address)
+      const name = personal.name.trim();
+      const email = personal.email.trim();
+      const mobile = personal.mobile.trim();
+      const address = personal.address.trim();
+
+      if (!name || !email || !mobile || !personal.dob || !address)
         return "Please fill all personal details.";
+      if (!NAME_REGEX.test(name)) {
+        return "Enter a valid full name.";
+      }
+      if (!EMAIL_REGEX.test(email)) {
+        return "Enter a valid email address.";
+      }
+      if (!MOBILE_REGEX.test(mobile)) {
+        return "Enter a valid mobile number (10 digits or +91 format).";
+      }
     }
     if (step === 1) {
       if (!property.surveyNumber || !property.location || !property.size)

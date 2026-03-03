@@ -7,6 +7,9 @@ import { Input, Button, Card, StepIndicator, FileUpload, Alert } from "../compon
 import VideoConsent from "../components/VideoConsent";
 
 const STEPS = ["Personal", "Property", "Documents", "Video Consent"];
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MOBILE_REGEX = /^(?:\+91[\s-]?)?[6-9]\d{9}$/;
+const NAME_REGEX = /^[A-Za-z][A-Za-z\s.'-]{1,}$/;
 
 export default function SellerDetails() {
   const { user } = useAuth();
@@ -36,8 +39,25 @@ export default function SellerDetails() {
   };
 
   const validateStep = () => {
-    if (step === 0 && (!personal.name || !personal.email || !personal.mobile || !personal.address))
-      return "Please fill all personal details.";
+    if (step === 0) {
+      const name = personal.name.trim();
+      const email = personal.email.trim();
+      const mobile = personal.mobile.trim();
+      const address = personal.address.trim();
+
+      if (!name || !email || !mobile || !address) {
+        return "Please fill all personal details.";
+      }
+      if (!NAME_REGEX.test(name)) {
+        return "Enter a valid full name.";
+      }
+      if (!EMAIL_REGEX.test(email)) {
+        return "Enter a valid email address.";
+      }
+      if (!MOBILE_REGEX.test(mobile)) {
+        return "Enter a valid mobile number (10 digits or +91 format).";
+      }
+    }
     if (step === 1 && (!property.surveyNumber || !property.ownershipDocs))
       return "Please fill all property details.";
     if (step === 2 && (!docNames.idProof || !docNames.propertyDocs))
