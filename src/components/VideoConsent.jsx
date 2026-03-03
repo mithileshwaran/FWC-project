@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button, Alert } from "./UI";
 import { useAuth } from "../hooks/useAuth.jsx";
-import { uploadFile, saveVideoConsent } from "../utils/firestore";
+import { saveVideoConsent } from "../utils/firestore";
 import { analyzeSentiment } from "../utils/sentiment";
 
 const CONSENT_SCRIPT =
@@ -15,7 +15,7 @@ export default function VideoConsent({ onComplete }) {
   const chunksRef = useRef([]);
   const recognitionRef = useRef(null);
 
-  const [phase, setPhase] = useState("ownership"); // ownership | countdown | recording | preview | analyzing | done
+  const [phase, setPhase] = useState("ownership");
   const [isOwner, setIsOwner] = useState(null);
   const [relation, setRelation] = useState("");
   const [countdown, setCountdown] = useState(3);
@@ -73,7 +73,6 @@ export default function VideoConsent({ onComplete }) {
     mediaRecorderRef.current = mr;
     mr.start();
 
-    // Speech recognition for transcript
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SR) {
       const rec = new SR();
@@ -89,7 +88,6 @@ export default function VideoConsent({ onComplete }) {
     }
 
     setPhase("recording");
-    // Auto-stop after 60 seconds
     setTimeout(() => stopRecording(), 60000);
   };
 
@@ -98,13 +96,11 @@ export default function VideoConsent({ onComplete }) {
     recognitionRef.current?.stop();
   };
 
-  // ── Analyse & Upload ─────────────────────────────────────────────────────
-  // ── Analyse & Save (no Storage upload — needs Blaze plan) ────────────────
+  // ── Analyse & Save ───────────────────────────────────────────────────────
   const handleSubmit = async () => {
     setUploading(true);
     setPhase("analyzing");
     try {
-      // AI Sentiment analysis on transcript
       const result = await analyzeSentiment(
         transcript || "I am selling this property by my own will"
       );
@@ -112,7 +108,6 @@ export default function VideoConsent({ onComplete }) {
 
       const aiApproved = result.label !== "negative";
 
-      // Save to Firestore without video URL
       await saveVideoConsent(user.uid, {
         videoUrl: "",
         transcript,
@@ -186,7 +181,7 @@ export default function VideoConsent({ onComplete }) {
                     className={`flex items-center gap-2 px-4 py-3 rounded-xl border-2 font-semibold text-sm transition-all text-left
                       ${relation === opt.value
                         ? "border-stone-900 bg-stone-900 text-white"
-                        : "border-stone-200 bg-white text-stone-600 hover:border-amber-400 hover:bg-amber-50"
+                        : "border-stone-200 bg-white text-stone-700 hover:border-amber-400 hover:bg-amber-50"
                       }`}
                   >
                     <span className="text-lg">{opt.emoji}</span>
@@ -205,15 +200,26 @@ export default function VideoConsent({ onComplete }) {
         </div>
       )}
 
-      {/* Phase: Countdown */}
+      {/* Phase: Countdown — camera visible! */}
       {phase === "countdown" && (
-        <div className="text-center py-10">
-          <div className="text-8xl font-black text-stone-900 animate-pulse">
-            {countdown === 0 ? "🔴" : countdown}
+        <div className="flex flex-col gap-4">
+          {/* Camera preview during countdown */}
+          <video
+            ref={videoRef}
+            className="w-full rounded-xl border-2 border-stone-200 bg-black"
+            style={{ maxHeight: 280 }}
+            autoPlay
+            muted
+            playsInline
+          />
+          <div className="text-center py-4">
+            <div className="text-8xl font-black text-stone-900 animate-pulse">
+              {countdown === 0 ? "🔴" : countdown}
+            </div>
+            <p className="text-stone-500 mt-2 font-medium">
+              {countdown > 0 ? "Recording starts in…" : "Recording!"}
+            </p>
           </div>
-          <p className="text-stone-500 mt-4 font-medium">
-            {countdown > 0 ? "Recording starts in…" : "Recording!"}
-          </p>
         </div>
       )}
 
@@ -223,18 +229,21 @@ export default function VideoConsent({ onComplete }) {
           {phase === "recording" && (
             <div className="flex items-center gap-2 justify-center">
               <span className="animate-pulse w-3 h-3 rounded-full bg-red-500 inline-block" />
-              <span className="text-sm font-bold text-red-600">RECORDING</span>
+              <span className="text-sm font-bold text-red-600">🔴 RECORDING</span>
             </div>
           )}
           <video
             ref={videoRef}
             className="w-full rounded-xl border-2 border-stone-200 bg-black"
             style={{ maxHeight: 280 }}
+            autoPlay
+            muted={phase === "recording"}
+            playsInline
           />
 
           {phase === "recording" && (
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-              <p className="text-sm text-stone-700 font-medium mb-1">📜 Consent Script:</p>
+              <p className="text-sm text-stone-700 font-medium mb-1">📜 Read this aloud:</p>
               <p className="text-sm text-stone-600 italic">{CONSENT_SCRIPT}</p>
             </div>
           )}
@@ -258,11 +267,7 @@ export default function VideoConsent({ onComplete }) {
               >
                 🔄 Re-record
               </Button>
-              <Button
-                onClick={handleSubmit}
-                loading={uploading}
-                className="flex-1"
-              >
+              <Button onClick={handleSubmit} loading={uploading} className="flex-1">
                 ✅ Submit Video →
               </Button>
             </div>
@@ -306,7 +311,7 @@ export default function VideoConsent({ onComplete }) {
           </p>
           {sentiment.label === "negative" && (
             <Alert type="warning">
-              Your video has been flagged for manual review by the Registrar due to detected sentiment. You will be notified once reviewed.
+              Your video has been flagged for manual review by the Registrar due to detected sentiment.
             </Alert>
           )}
           {transcript && (
