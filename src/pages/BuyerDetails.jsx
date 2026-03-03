@@ -106,10 +106,10 @@ export default function BuyerDetails() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(56,189,248,0.2),transparent_35%),radial-gradient(circle_at_80%_10%,rgba(16,185,129,0.15),transparent_30%),linear-gradient(145deg,#020617_20%,#0f172a_100%)]" />
         <Card className="relative z-10 max-w-md w-full p-10 text-center">
           <div className="text-6xl mb-4">{verificationResult ? "🎉" : "⚠️"}</div>
-          <h2 className="text-2xl font-black text-stone-900 mb-3" style={{ fontFamily: "Georgia, serif" }}>
+          <h2 className="text-2xl font-black text-white mb-3" style={{ fontFamily: "Georgia, serif" }}>
             {verificationResult ? "Document Verified!" : "Manual Review Required"}
           </h2>
-          <p className="text-stone-500 mb-6">
+          <p className="text-slate-300 mb-6">
             {verificationResult
               ? "Your land records have been cross-verified with TNREGINET. Registration is complete!"
               : "We couldn't auto-verify your documents. They've been flagged for manual review by the Registrar."}
@@ -128,7 +128,7 @@ export default function BuyerDetails() {
       <div className="relative z-10 max-w-xl mx-auto">
         <div className="text-center mb-8">
           <span className="text-3xl">🛒</span>
-          <h1 className="text-2xl font-black text-stone-900 mt-2" style={{ fontFamily: "Georgia, serif" }}>
+          <h1 className="text-2xl font-black text-white mt-2" style={{ fontFamily: "Georgia, serif" }}>
             Buyer Registration
           </h1>
         </div>
@@ -145,9 +145,9 @@ export default function BuyerDetails() {
                 <Input label="Mobile" type="tel" placeholder="+91 98765 43210" value={personal.mobile} onChange={setP("mobile")} />
                 <Input label="Date of Birth" type="date" value={personal.dob} onChange={setP("dob")} />
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs font-semibold text-stone-700 uppercase tracking-wide">Address</label>
+                  <label className="text-xs font-semibold text-slate-300 uppercase tracking-wide">Address</label>
                   <textarea
-                    className="w-full px-4 py-3 rounded-xl border-2 border-stone-200 bg-white focus:outline-none focus:border-amber-500 transition-all text-stone-800 font-medium resize-none"
+                    className="w-full px-4 py-3 rounded-xl border border-slate-700 bg-slate-900 focus:outline-none focus:border-cyan-400 transition-all text-slate-100 placeholder-slate-500 font-medium resize-none"
                     rows={3}
                     placeholder="No. 12, Anna Nagar, Chennai - 600040"
                     value={personal.address}
