@@ -102,8 +102,9 @@ export default function BuyerDetails() {
 
   if (verificationResult !== null) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-stone-50 to-amber-50 flex items-center justify-center p-4">
-        <Card className="max-w-md w-full p-10 text-center">
+      <div className="relative min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(56,189,248,0.2),transparent_35%),radial-gradient(circle_at_80%_10%,rgba(16,185,129,0.15),transparent_30%),linear-gradient(145deg,#020617_20%,#0f172a_100%)]" />
+        <Card className="relative z-10 max-w-md w-full p-10 text-center">
           <div className="text-6xl mb-4">{verificationResult ? "🎉" : "⚠️"}</div>
           <h2 className="text-2xl font-black text-stone-900 mb-3" style={{ fontFamily: "Georgia, serif" }}>
             {verificationResult ? "Document Verified!" : "Manual Review Required"}
@@ -122,8 +123,9 @@ export default function BuyerDetails() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-stone-50 to-amber-50 py-10 px-4">
-      <div className="max-w-xl mx-auto">
+    <div className="relative min-h-screen bg-slate-950 text-slate-100 py-10 px-4">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(56,189,248,0.2),transparent_35%),radial-gradient(circle_at_80%_10%,rgba(16,185,129,0.15),transparent_30%),linear-gradient(145deg,#020617_20%,#0f172a_100%)]" />
+      <div className="relative z-10 max-w-xl mx-auto">
         <div className="text-center mb-8">
           <span className="text-3xl">🛒</span>
           <h1 className="text-2xl font-black text-stone-900 mt-2" style={{ fontFamily: "Georgia, serif" }}>
