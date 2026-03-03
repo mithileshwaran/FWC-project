@@ -4,7 +4,7 @@
 
 const HF_API_URL =
   "https://api-inference.huggingface.co/models/cardiffnlp/twitter-roberta-base-sentiment-latest";
-const HF_TOKEN = "YOUR_HF_TOKEN"; // Replace with your free Hugging Face token
+const HF_TOKEN = import.meta.env.VITE_HF_TOKEN; // Replace with your free Hugging Face token
 
 /**
  * Analyse sentiment of a text string.
