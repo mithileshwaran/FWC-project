@@ -218,7 +218,7 @@ export default function VideoConsent({ onComplete }) {
         </div>
       )}
 
-      {(phase === "countdown" || phase === "recording") && (
+      {(phase === "countdown" || phase === "recording" || phase === "preview") && (
         <div className="flex flex-col gap-4">
           <video
             ref={liveVideoRef}
