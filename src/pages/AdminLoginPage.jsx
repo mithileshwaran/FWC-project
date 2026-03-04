@@ -61,10 +61,6 @@ export default function AdminLoginPage() {
               </Button>
             </form>
 
-            <p className="text-xs text-slate-400">
-              Default Admin ID: <span className="font-semibold text-slate-200">admin</span> | Password:{" "}
-              <span className="font-semibold text-slate-200">12345678A@</span>
-            </p>
           </div>
         </Card>
       </div>
