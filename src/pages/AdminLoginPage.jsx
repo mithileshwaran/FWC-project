@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Input, Button, Card, Alert } from "../components/UI";
 
 const ADMIN_ID = "admin";
-const ADMIN_PASSWORD = "1345678aA@";
+const ADMIN_PASSWORD = "12345678A@";
 const ADMIN_SESSION_KEY = "fwc_admin_auth";
 
 export default function AdminLoginPage() {
@@ -63,7 +63,7 @@ export default function AdminLoginPage() {
 
             <p className="text-xs text-slate-400">
               Default Admin ID: <span className="font-semibold text-slate-200">admin</span> | Password:{" "}
-              <span className="font-semibold text-slate-200">1345678aA@</span>
+              <span className="font-semibold text-slate-200">12345678A@</span>
             </p>
           </div>
         </Card>
