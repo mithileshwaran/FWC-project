@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth.jsx";
 import { Input, Button, Card, Alert } from "../components/UI";
@@ -18,6 +18,17 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(location.state?.success || "");
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const modeParam = params.get("mode");
+    const oobCode = params.get("oobCode");
+    if (modeParam === "resetPassword" || oobCode) {
+      setMode("forgot");
+      setForgotStep("verify");
+      if (oobCode) setResetCode(oobCode);
+    }
+  }, [location.search]);
 
   const switchMode = (nextMode) => {
     setMode(nextMode);
@@ -95,7 +106,7 @@ export default function AuthPage() {
     setLoading(true);
     try {
       await sendResetEmail(normalizedEmail);
-      setSuccess("Reset email sent. Check Inbox/Spam and paste the code or link below.");
+      setSuccess("Reset link sent. Check Inbox/Spam and open the link, or paste the code/link below.");
       setForgotStep("verify");
     } catch (err) {
       setError(err.message.replace("Firebase: ", ""));
@@ -108,7 +119,7 @@ export default function AuthPage() {
     e.preventDefault();
     const code = extractResetCode(resetCode);
     if (!code || !newPassword) {
-      setError("Enter OTP/reset code and new password.");
+      setError("Enter the reset code/link and a new password.");
       return;
     }
 
@@ -258,16 +269,16 @@ export default function AuthPage() {
 
                 {forgotStep === "email" && (
                   <Button type="button" loading={loading} onClick={handleSendReset} className="w-full">
-                    Send OTP
+                    Send Reset Link
                   </Button>
                 )}
 
                 {forgotStep === "verify" && (
                   <>
                     <Input
-                      label="OTP / Reset Code"
+                      label="Reset Code / Link"
                       type="text"
-                      placeholder="Paste reset code or full link from mail"
+                      placeholder="Paste reset code or full link from email"
                       value={resetCode}
                       onChange={(e) => setResetCode(e.target.value)}
                       required
@@ -281,10 +292,10 @@ export default function AuthPage() {
                       required
                     />
                     <Button type="submit" loading={loading} className="w-full">
-                      Verify OTP and Update Password
+                      Update Password
                     </Button>
                     <Button type="button" variant="secondary" onClick={handleSendReset} loading={loading} className="w-full">
-                      Resend OTP
+                      Resend Reset Link
                     </Button>
                   </>
                 )}
