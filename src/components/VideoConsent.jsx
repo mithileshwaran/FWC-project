@@ -57,12 +57,17 @@ export default function VideoConsent({ onComplete }) {
   }, [recordedUrl]);
 
   // ── Start camera ──────────────────────────────────────────────────────
-  const startPreview = async () => {
-    setError("");
-    setCountdown(3);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      streamRef.current = stream;
+const startPreview = async () => {
+  setError("");
+  setCountdown(3);
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ 
+      video: true, audio: true 
+    });
+    streamRef.current = stream;
+    setPhase("countdown");
+    // Small delay to let video element mount first
+    setTimeout(() => {
       const v = videoRef.current;
       if (v) {
         v.srcObject = stream;
@@ -70,11 +75,11 @@ export default function VideoConsent({ onComplete }) {
         v.playsInline = true;
         v.play().catch(() => {});
       }
-      setPhase("countdown");
-    } catch {
-      setError("Camera access denied. Please allow camera and microphone in browser settings.");
-    }
-  };
+    }, 100);
+  } catch {
+    setError("Camera access denied. Please allow camera and microphone.");
+  }
+};
 
   // ── Start recording ───────────────────────────────────────────────────
   const startRecording = () => {
