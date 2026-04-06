@@ -7,21 +7,25 @@ import { Button } from "../components/UI";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
+  const [buyers, setBuyers] = useState([]);
   const [sellers, setSellers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState({});
   const [filter, setFilter] = useState("all");
 
   useEffect(() => {
-    fetchSellers();
+    fetchAll();
   }, []);
 
-  const fetchSellers = async () => {
+  const fetchAll = async () => {
     setLoading(true);
     try {
-      const snap = await getDocs(collection(db, "sellers"));
-      const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      setSellers(data);
+      const [buyerSnap, sellerSnap] = await Promise.all([
+        getDocs(collection(db, "buyers")),
+        getDocs(collection(db, "sellers")),
+      ]);
+      setBuyers(buyerSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      setSellers(sellerSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
     } finally {
       setLoading(false);
     }
@@ -75,7 +79,7 @@ export default function AdminDashboard() {
           <p className="text-slate-400 text-xs">TN Land Registry - Admin Panel</p>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={fetchSellers} className="text-slate-400 hover:text-white text-sm font-medium transition-colors">
+          <button onClick={fetchAll} className="text-slate-400 hover:text-white text-sm font-medium transition-colors">
             Refresh
           </button>
           <button onClick={handleAdminLogout} className="bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-xl text-sm font-bold transition-all">
@@ -87,6 +91,7 @@ export default function AdminDashboard() {
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
           {[
+            { label: "Total Buyers", value: buyers.length, color: "text-white" },
             { label: "Total Sellers", value: sellers.length, color: "text-white" },
             { label: "Pending Review", value: sellers.filter((s) => !s.approvalStatus || s.approvalStatus === "pending").length, color: "text-amber-400" },
             { label: "Flagged (AI)", value: sellers.filter((s) => s.videoConsent?.sentiment?.label === "negative").length, color: "text-red-400" },
@@ -99,90 +104,128 @@ export default function AdminDashboard() {
           ))}
         </div>
 
-        <div className="flex gap-2 mb-6 flex-wrap">
-          {["all", "pending", "flagged", "approved", "rejected"].map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-4 py-2 rounded-xl text-sm font-bold transition-all capitalize ${
-                filter === f ? "bg-cyan-500 text-white" : "bg-slate-800 text-slate-400 hover:text-white"
-              }`}
-            >
-              {f}
-            </button>
-          ))}
-        </div>
-
         {loading ? (
           <div className="text-center py-20 text-slate-400">Loading registrations...</div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-20 text-slate-400">No records found.</div>
         ) : (
-          <div className="flex flex-col gap-4">
-            {filtered.map((seller) => {
-              const consent = seller.videoConsent;
-              const sentimentLabel = consent?.sentiment?.label || "neutral";
-              const status = seller.approvalStatus || "pending";
-
-              return (
-                <div key={seller.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 hover:border-slate-700 transition-all">
-                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2 flex-wrap">
-                        <h3 className="font-black text-white text-lg">{seller.name || "Unknown"}</h3>
-                        {sentimentBadge(sentimentLabel)}
-                        <span
-                          className={`text-xs font-bold px-2 py-1 rounded-full ${
-                            status === "approved"
-                              ? "bg-emerald-900 text-emerald-400"
-                              : status === "rejected"
-                              ? "bg-red-900 text-red-400"
-                              : "bg-amber-900 text-amber-400"
-                          }`}
-                        >
-                          {status.toUpperCase()}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <section className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-black text-white">Buyers</h2>
+                <span className="text-xs text-slate-400">{buyers.length} total</span>
+              </div>
+              {buyers.length === 0 ? (
+                <div className="text-slate-400 text-sm">No buyer records yet.</div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {buyers.map((buyer) => (
+                    <div key={buyer.id} className="bg-slate-950 border border-slate-800 rounded-xl p-4">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-bold text-white">{buyer.name || "Unknown"}</h3>
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                          buyer.verified ? "bg-emerald-900 text-emerald-400" : "bg-amber-900 text-amber-400"
+                        }`}>
+                          {buyer.verified ? "VERIFIED" : "PENDING"}
                         </span>
                       </div>
-                      <p className="text-slate-400 text-sm">{seller.email} | {seller.mobile}</p>
-                      <p className="text-slate-400 text-sm mt-1">
-                        Survey: <span className="text-cyan-300 font-mono">{seller.property?.surveyNumber}</span>
+                      <p className="text-slate-400 text-xs mt-1">{buyer.email} | {buyer.mobile}</p>
+                      <p className="text-slate-400 text-xs mt-1">
+                        Survey: <span className="text-cyan-300 font-mono">{buyer.property?.surveyNumber || "-"}</span>
                       </p>
-                      {consent?.videoUrl && (
-                        <a
-                          href={consent.videoUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1 mt-2 text-cyan-300 hover:text-cyan-200 text-sm font-medium"
-                        >
-                          View Consent Video
-                        </a>
-                      )}
                     </div>
-
-                    {status === "pending" && (
-                      <div className="flex gap-2 sm:flex-col">
-                        <Button
-                          variant="success"
-                          onClick={() => handleApprove(seller.id)}
-                          loading={actionLoading[seller.id] === "approve"}
-                          className="text-sm px-5 py-2"
-                        >
-                          Approve
-                        </Button>
-                        <Button
-                          variant="danger"
-                          onClick={() => handleReject(seller.id)}
-                          loading={actionLoading[seller.id] === "reject"}
-                          className="text-sm px-5 py-2"
-                        >
-                          Reject
-                        </Button>
-                      </div>
-                    )}
-                  </div>
+                  ))}
                 </div>
-              );
-            })}
+              )}
+            </section>
+
+            <section className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-black text-white">Sellers</h2>
+                <span className="text-xs text-slate-400">{sellers.length} total</span>
+              </div>
+
+              <div className="flex gap-2 mb-5 flex-wrap">
+                {["all", "pending", "flagged", "approved", "rejected"].map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => setFilter(f)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all capitalize ${
+                      filter === f ? "bg-cyan-500 text-white" : "bg-slate-800 text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    {f}
+                  </button>
+                ))}
+              </div>
+
+              {filtered.length === 0 ? (
+                <div className="text-slate-400 text-sm">No seller records found.</div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {filtered.map((seller) => {
+                    const consent = seller.videoConsent;
+                    const sentimentLabel = consent?.sentiment?.label || "neutral";
+                    const status = seller.approvalStatus || "pending";
+
+                    return (
+                      <div key={seller.id} className="bg-slate-950 border border-slate-800 rounded-xl p-4">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-bold text-white">{seller.name || "Unknown"}</h3>
+                          {sentimentBadge(sentimentLabel)}
+                          <span
+                            className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                              status === "approved"
+                                ? "bg-emerald-900 text-emerald-400"
+                                : status === "rejected"
+                                ? "bg-red-900 text-red-400"
+                                : "bg-amber-900 text-amber-400"
+                            }`}
+                          >
+                            {status.toUpperCase()}
+                          </span>
+                        </div>
+                        <p className="text-slate-400 text-xs mt-1">{seller.email} | {seller.mobile}</p>
+                        <p className="text-slate-400 text-xs mt-1">
+                          Survey: <span className="text-cyan-300 font-mono">{seller.property?.surveyNumber || "-"}</span>
+                        </p>
+                        {consent?.videoUrl ? (
+                          <a
+                            href={consent.videoUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 mt-2 text-cyan-300 hover:text-cyan-200 text-xs font-medium"
+                          >
+                            View Consent Video
+                          </a>
+                        ) : (
+                          <p className="text-slate-500 text-xs mt-2">No consent video uploaded.</p>
+                        )}
+
+                        {status === "pending" && (
+                          <div className="flex gap-2 mt-3">
+                            <Button
+                              variant="success"
+                              onClick={() => handleApprove(seller.id)}
+                              loading={actionLoading[seller.id] === "approve"}
+                              className="text-xs px-4 py-1.5"
+                            >
+                              Approve
+                            </Button>
+                            <Button
+                              variant="danger"
+                              onClick={() => handleReject(seller.id)}
+                              loading={actionLoading[seller.id] === "reject"}
+                              className="text-xs px-4 py-1.5"
+                            >
+                              Reject
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
           </div>
         )}
       </div>
