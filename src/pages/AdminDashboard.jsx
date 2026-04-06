@@ -61,6 +61,15 @@ export default function AdminDashboard() {
     setActionLoading((a) => ({ ...a, [uid]: null }));
   };
 
+  const handleDeleteBuyer = async (uid) => {
+    const ok = window.confirm("Delete this buyer record? This cannot be undone.");
+    if (!ok) return;
+    setActionLoading((a) => ({ ...a, [uid]: "deleteBuyer" }));
+    await deleteRecord("buyers", uid);
+    setBuyers((prev) => prev.filter((b) => b.id !== uid));
+    setActionLoading((a) => ({ ...a, [uid]: null }));
+  };
+
   const filtered = sellers.filter((s) => {
     if (filter === "pending") return !s.approvalStatus || s.approvalStatus === "pending";
     if (filter === "flagged") return s.videoConsent?.sentiment?.label === "negative";
@@ -216,6 +225,12 @@ export default function AdminDashboard() {
                       {expandedBuyers[buyer.id] && (
                         renderTable(buyerRows(buyer))
                       )}
+                      <button
+                        onClick={() => handleDeleteBuyer(buyer.id)}
+                        className="mt-3 text-xs font-bold text-red-400 hover:text-red-300"
+                      >
+                        Delete Data
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -298,34 +313,36 @@ export default function AdminDashboard() {
                           renderTable(sellerRows(seller))
                         )}
 
-                        {status === "pending" && (
-                          <div className="flex gap-2 mt-3">
-                            <Button
-                              variant="success"
-                              onClick={() => handleApprove(seller.id)}
-                              loading={actionLoading[seller.id] === "approve"}
-                              className="text-xs px-4 py-1.5"
-                            >
-                              Approve
-                            </Button>
-                            <Button
-                              variant="danger"
-                              onClick={() => handleReject(seller.id)}
-                              loading={actionLoading[seller.id] === "reject"}
-                              className="text-xs px-4 py-1.5"
-                            >
-                              Reject
-                            </Button>
-                            <Button
-                              variant="secondary"
-                              onClick={() => handleDeleteSeller(seller.id)}
-                              loading={actionLoading[seller.id] === "delete"}
-                              className="text-xs px-4 py-1.5"
-                            >
-                              Delete
-                            </Button>
-                          </div>
-                        )}
+                        <div className="flex gap-2 mt-3 flex-wrap">
+                          {status === "pending" && (
+                            <>
+                              <Button
+                                variant="success"
+                                onClick={() => handleApprove(seller.id)}
+                                loading={actionLoading[seller.id] === "approve"}
+                                className="text-xs px-4 py-1.5"
+                              >
+                                Approve
+                              </Button>
+                              <Button
+                                variant="danger"
+                                onClick={() => handleReject(seller.id)}
+                                loading={actionLoading[seller.id] === "reject"}
+                                className="text-xs px-4 py-1.5"
+                              >
+                                Reject
+                              </Button>
+                            </>
+                          )}
+                          <Button
+                            variant="secondary"
+                            onClick={() => handleDeleteSeller(seller.id)}
+                            loading={actionLoading[seller.id] === "delete"}
+                            className="text-xs px-4 py-1.5"
+                          >
+                            Delete Data
+                          </Button>
+                        </div>
                       </div>
                     );
                   })}
