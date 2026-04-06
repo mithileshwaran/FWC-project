@@ -60,6 +60,35 @@ export const uploadFile = async (path, file, options = {}) => {
   }
 };
 
+// --- Cloudinary upload (free alternative to Firebase Storage)
+export const uploadVideoToCloudinary = async (file, options = {}) => {
+  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+  const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+  const folder = options.folder || "fwc";
+
+  if (!cloudName || !uploadPreset) {
+    throw new Error("Cloudinary config missing. Set VITE_CLOUDINARY_CLOUD_NAME and VITE_CLOUDINARY_UPLOAD_PRESET.");
+  }
+
+  const form = new FormData();
+  form.append("file", file);
+  form.append("upload_preset", uploadPreset);
+  if (folder) form.append("folder", folder);
+
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/video/upload`, {
+    method: "POST",
+    body: form,
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Cloudinary upload failed: ${text}`);
+  }
+
+  const data = await res.json();
+  return data.secure_url || data.url || "";
+};
+
 // ── Verification status ───────────────────────────────────────────────────────
 export const updateVerificationStatus = async (collection, uid, verified) => {
   await updateDoc(doc(db, collection, uid), {

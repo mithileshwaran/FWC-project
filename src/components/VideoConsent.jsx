@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Button, Alert } from "./UI";
 import { useAuth } from "../hooks/useAuth.jsx";
-import { saveVideoConsent, uploadFile } from "../utils/firestore";
+import { saveVideoConsent, uploadVideoToCloudinary } from "../utils/firestore";
 import { analyzeSentiment } from "../utils/sentiment";
 
 const CONSENT_SCRIPT =
@@ -156,8 +156,9 @@ const startPreview = async () => {
       setSentiment(result);
       const aiApproved = result.label !== "negative";
       const videoBlob = recordedBlobRef.current;
-      const videoPath = `consentVideos/${user.uid}/${Date.now()}.webm`;
-      const videoUrl = videoBlob ? await uploadFile(videoPath, videoBlob, { retries: 2 }) : "";
+      const videoUrl = videoBlob
+        ? await uploadVideoToCloudinary(videoBlob, { folder: "fwc/consent-videos" })
+        : "";
       await saveVideoConsent(user.uid, {
         videoUrl,
         transcript,
