@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Button, Alert } from "./UI";
 import { useAuth } from "../hooks/useAuth.jsx";
-import { saveVideoConsent } from "../utils/firestore";
+import { saveVideoConsent, uploadFile } from "../utils/firestore";
 import { analyzeSentiment } from "../utils/sentiment";
 
 const CONSENT_SCRIPT =
@@ -14,6 +14,7 @@ export default function VideoConsent({ onComplete }) {
   const recognitionRef = useRef(null);
   const chunksRef = useRef([]);
   const streamRef = useRef(null);
+  const recordedBlobRef = useRef(null);
 
   const [phase, setPhase] = useState("ownership");
   const [isOwner, setIsOwner] = useState(null);
@@ -98,6 +99,7 @@ const startPreview = async () => {
 
     recorder.onstop = () => {
       const blob = new Blob(chunksRef.current, { type: "video/webm" });
+      recordedBlobRef.current = blob;
       const url = URL.createObjectURL(blob);
       setRecordedUrl(url);
       stream.getTracks().forEach((t) => t.stop());
@@ -153,8 +155,11 @@ const startPreview = async () => {
       );
       setSentiment(result);
       const aiApproved = result.label !== "negative";
+      const videoBlob = recordedBlobRef.current;
+      const videoPath = `consentVideos/${user.uid}/${Date.now()}.webm`;
+      const videoUrl = videoBlob ? await uploadFile(videoPath, videoBlob, { retries: 2 }) : "";
       await saveVideoConsent(user.uid, {
-        videoUrl: "",
+        videoUrl,
         transcript,
         sentiment: result,
         aiApproved,
@@ -164,7 +169,7 @@ const startPreview = async () => {
         manualReviewRequired: !aiApproved,
       });
       setPhase("done");
-      if (onComplete) onComplete({ aiApproved, sentiment: result });
+      if (onComplete) onComplete({ aiApproved, sentiment: result, videoUrl });
     } catch (err) {
       setError(err?.message || "Video submission failed.");
       setPhase("preview");
