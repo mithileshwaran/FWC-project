@@ -263,25 +263,28 @@ export default function AdminDashboard() {
                       <p className="text-slate-400 text-xs mt-1">
                         Survey: <span className="text-cyan-300 font-mono">{seller.property?.surveyNumber || "-"}</span>
                       </p>
-                        {consent?.videoUrl ? (
-                          <a
-                            href={consent.videoUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1 mt-2 text-cyan-300 hover:text-cyan-200 text-xs font-medium"
+                        <div className="mt-3 flex flex-col gap-2">
+                          <button
+                            onClick={() => toggleSeller(seller.id)}
+                            className="text-xs font-bold text-cyan-300 hover:text-cyan-200 text-left"
                           >
-                            View Consent Video
-                          </a>
-                        ) : (
-                          <p className="text-slate-500 text-xs mt-2">No consent video uploaded.</p>
-                        )}
+                            {expandedSellers[seller.id] ? "Hide Full Data" : "View Full Data"}
+                          </button>
 
-                        <button
-                          onClick={() => toggleSeller(seller.id)}
-                          className="mt-3 text-xs font-bold text-cyan-300 hover:text-cyan-200"
-                        >
-                          {expandedSellers[seller.id] ? "Hide Full Data" : "View Full Data"}
-                        </button>
+                          {consent?.videoUrl ? (
+                            <a
+                              href={consent.videoUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1 text-cyan-300 hover:text-cyan-200 text-xs font-medium"
+                            >
+                              View Consent Video
+                            </a>
+                          ) : (
+                            <p className="text-slate-500 text-xs">No consent video uploaded.</p>
+                          )}
+                        </div>
+
                         {expandedSellers[seller.id] && (
                           renderTable(sellerRows(seller))
                         )}
