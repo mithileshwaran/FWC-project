@@ -11,6 +11,8 @@ export default function AdminDashboard() {
   const [sellers, setSellers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState({});
+  const [expandedBuyers, setExpandedBuyers] = useState({});
+  const [expandedSellers, setExpandedSellers] = useState({});
   const [filter, setFilter] = useState("all");
 
   useEffect(() => {
@@ -69,6 +71,71 @@ export default function AdminDashboard() {
         {(label || "unknown").toUpperCase()}
       </span>
     );
+  };
+
+  const renderTable = (rows) => (
+    <div className="mt-3 overflow-x-auto">
+      <table className="w-full text-xs border border-slate-800 rounded-xl overflow-hidden">
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.label} className="border-t border-slate-800">
+              <td className="px-3 py-2 text-slate-400 font-semibold whitespace-nowrap w-36 bg-slate-900">
+                {row.label}
+              </td>
+              <td className="px-3 py-2 text-slate-200">
+                {row.value || "-"}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+
+  const buyerRows = (buyer) => ([
+    { label: "Name", value: buyer.name },
+    { label: "Email", value: buyer.email },
+    { label: "Mobile", value: buyer.mobile },
+    { label: "DOB", value: buyer.dob },
+    { label: "Address", value: buyer.address },
+    { label: "Survey No", value: buyer.property?.surveyNumber },
+    { label: "Location", value: buyer.property?.location },
+    { label: "Size (sq.ft)", value: buyer.property?.size },
+    { label: "ID Proof", value: buyer.documents?.idProof },
+    { label: "Address Proof", value: buyer.documents?.addressProof },
+    { label: "Property Docs", value: buyer.documents?.propertyDocs },
+    { label: "Status", value: buyer.status },
+    { label: "Verified", value: buyer.verified ? "Yes" : "No" },
+    { label: "Verified At", value: buyer.verifiedAt ? new Date(buyer.verifiedAt.seconds * 1000).toLocaleString() : "" },
+    { label: "Updated At", value: buyer.updatedAt ? new Date(buyer.updatedAt.seconds * 1000).toLocaleString() : "" },
+  ]);
+
+  const sellerRows = (seller) => ([
+    { label: "Name", value: seller.name },
+    { label: "Email", value: seller.email },
+    { label: "Mobile", value: seller.mobile },
+    { label: "Business", value: seller.businessName },
+    { label: "Address", value: seller.address },
+    { label: "Survey No", value: seller.property?.surveyNumber },
+    { label: "Ownership Doc", value: seller.property?.ownershipDocs },
+    { label: "ID Proof", value: seller.documents?.idProof },
+    { label: "Property Docs", value: seller.documents?.propertyDocs },
+    { label: "Status", value: seller.approvalStatus || "pending" },
+    { label: "Verified", value: seller.verified ? "Yes" : "No" },
+    { label: "Video URL", value: seller.videoConsent?.videoUrl },
+    { label: "AI Approved", value: seller.videoConsent?.aiApproved ? "Yes" : "No" },
+    { label: "Sentiment", value: seller.videoConsent?.sentiment?.label },
+    { label: "Relation", value: seller.videoConsent?.relation },
+    { label: "Recorded At", value: seller.videoConsent?.recordedAt },
+    { label: "Updated At", value: seller.updatedAt ? new Date(seller.updatedAt.seconds * 1000).toLocaleString() : "" },
+  ]);
+
+  const toggleBuyer = (id) => {
+    setExpandedBuyers((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const toggleSeller = (id) => {
+    setExpandedSellers((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
   return (
@@ -131,6 +198,15 @@ export default function AdminDashboard() {
                       <p className="text-slate-400 text-xs mt-1">
                         Survey: <span className="text-cyan-300 font-mono">{buyer.property?.surveyNumber || "-"}</span>
                       </p>
+                      <button
+                        onClick={() => toggleBuyer(buyer.id)}
+                        className="mt-3 text-xs font-bold text-cyan-300 hover:text-cyan-200"
+                      >
+                        {expandedBuyers[buyer.id] ? "Hide Full Data" : "View Full Data"}
+                      </button>
+                      {expandedBuyers[buyer.id] && (
+                        renderTable(buyerRows(buyer))
+                      )}
                     </div>
                   ))}
                 </div>
@@ -184,9 +260,9 @@ export default function AdminDashboard() {
                           </span>
                         </div>
                         <p className="text-slate-400 text-xs mt-1">{seller.email} | {seller.mobile}</p>
-                        <p className="text-slate-400 text-xs mt-1">
-                          Survey: <span className="text-cyan-300 font-mono">{seller.property?.surveyNumber || "-"}</span>
-                        </p>
+                      <p className="text-slate-400 text-xs mt-1">
+                        Survey: <span className="text-cyan-300 font-mono">{seller.property?.surveyNumber || "-"}</span>
+                      </p>
                         {consent?.videoUrl ? (
                           <a
                             href={consent.videoUrl}
@@ -198,6 +274,16 @@ export default function AdminDashboard() {
                           </a>
                         ) : (
                           <p className="text-slate-500 text-xs mt-2">No consent video uploaded.</p>
+                        )}
+
+                        <button
+                          onClick={() => toggleSeller(seller.id)}
+                          className="mt-3 text-xs font-bold text-cyan-300 hover:text-cyan-200"
+                        >
+                          {expandedSellers[seller.id] ? "Hide Full Data" : "View Full Data"}
+                        </button>
+                        {expandedSellers[seller.id] && (
+                          renderTable(sellerRows(seller))
                         )}
 
                         {status === "pending" && (
