@@ -216,21 +216,23 @@ export default function AdminDashboard() {
                       <p className="text-slate-400 text-xs mt-1">
                         Survey: <span className="text-cyan-300 font-mono">{buyer.property?.surveyNumber || "-"}</span>
                       </p>
-                      <button
-                        onClick={() => toggleBuyer(buyer.id)}
-                        className="mt-3 text-xs font-bold text-cyan-300 hover:text-cyan-200"
-                      >
-                        {expandedBuyers[buyer.id] ? "Hide Full Data" : "View Full Data"}
-                      </button>
-                      {expandedBuyers[buyer.id] && (
-                        renderTable(buyerRows(buyer))
-                      )}
-                      <button
-                        onClick={() => handleDeleteBuyer(buyer.id)}
-                        className="mt-3 text-xs font-bold text-red-400 hover:text-red-300"
-                      >
-                        Delete Data
-                      </button>
+                      <div className="mt-3 flex flex-col gap-2">
+                        <button
+                          onClick={() => toggleBuyer(buyer.id)}
+                          className="text-xs font-bold text-cyan-300 hover:text-cyan-200 text-left"
+                        >
+                          {expandedBuyers[buyer.id] ? "Hide Full Data" : "View Full Data"}
+                        </button>
+                        {expandedBuyers[buyer.id] && (
+                          renderTable(buyerRows(buyer))
+                        )}
+                        <button
+                          onClick={() => handleDeleteBuyer(buyer.id)}
+                          className="text-xs font-bold text-red-400 hover:text-red-300 text-left"
+                        >
+                          Delete Data
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -334,15 +336,13 @@ export default function AdminDashboard() {
                               </Button>
                             </>
                           )}
-                          <Button
-                            variant="secondary"
-                            onClick={() => handleDeleteSeller(seller.id)}
-                            loading={actionLoading[seller.id] === "delete"}
-                            className="text-xs px-4 py-1.5"
-                          >
-                            Delete Data
-                          </Button>
                         </div>
+                        <button
+                          onClick={() => handleDeleteSeller(seller.id)}
+                          className="mt-2 text-xs font-bold text-red-400 hover:text-red-300 text-left"
+                        >
+                          Delete Data
+                        </button>
                       </div>
                     );
                   })}
