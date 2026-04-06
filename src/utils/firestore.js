@@ -1,5 +1,5 @@
 // utils/firestore.js
-import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, getDoc, updateDoc, serverTimestamp, deleteDoc } from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { db, storage } from "../firebase/config";
 
@@ -109,4 +109,9 @@ export const updateApprovalStatus = async (uid, status, reviewedBy) => {
     reviewedBy,
     reviewedAt: serverTimestamp(),
   });
+};
+
+// --- Admin delete (seller or buyer)
+export const deleteRecord = async (collectionName, uid) => {
+  await deleteDoc(doc(db, collectionName, uid));
 };

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase/config";
-import { updateApprovalStatus } from "../utils/firestore";
+import { updateApprovalStatus, deleteRecord } from "../utils/firestore";
 import { Button } from "../components/UI";
 
 export default function AdminDashboard() {
@@ -49,6 +49,15 @@ export default function AdminDashboard() {
     setActionLoading((a) => ({ ...a, [uid]: "reject" }));
     await updateApprovalStatus(uid, "rejected", "admin");
     setSellers((prev) => prev.map((s) => (s.id === uid ? { ...s, approvalStatus: "rejected" } : s)));
+    setActionLoading((a) => ({ ...a, [uid]: null }));
+  };
+
+  const handleDeleteSeller = async (uid) => {
+    const ok = window.confirm("Delete this seller record? This cannot be undone.");
+    if (!ok) return;
+    setActionLoading((a) => ({ ...a, [uid]: "delete" }));
+    await deleteRecord("sellers", uid);
+    setSellers((prev) => prev.filter((s) => s.id !== uid));
     setActionLoading((a) => ({ ...a, [uid]: null }));
   };
 
@@ -306,6 +315,14 @@ export default function AdminDashboard() {
                               className="text-xs px-4 py-1.5"
                             >
                               Reject
+                            </Button>
+                            <Button
+                              variant="secondary"
+                              onClick={() => handleDeleteSeller(seller.id)}
+                              loading={actionLoading[seller.id] === "delete"}
+                              className="text-xs px-4 py-1.5"
+                            >
+                              Delete
                             </Button>
                           </div>
                         )}
